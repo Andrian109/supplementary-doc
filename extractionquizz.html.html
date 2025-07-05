@@ -1,0 +1,1167 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Extraction Methods Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .quiz-container {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .quiz-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .draggable {
+            touch-action: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .draggable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .drop-zone {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            transform: scale(1.02);
+        }
+
+        .feedback-correct {
+            animation: flash-green 0.5s ease;
+        }
+
+        .feedback-incorrect {
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes flash-green {
+            0% { background-color: #fff; }
+            50% { background-color: #a7f3d0; }
+            100% { background-color: #fff; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            animation: confetti 2s ease-out forwards;
+        }
+
+        .tab-button {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, transform 0.2s;
+        }
+
+        .tab-button.active {
+            background-color: #059669;
+            color: white;
+            border-color: #059669;
+            transform: scale(1.05);
+        }
+
+        .tab-button:hover {
+            transform: scale(1.05);
+        }
+
+        .option-label {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .option-label:hover {
+            transform: scale(1.02);
+        }
+
+        #language-toggle {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #language-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        #google_translate_element {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-emerald-700 mb-2 animate-pulse">Extraction Methods Adventure</h1>
+            <p class="text-lg text-gray-600">Master the Art of Isolating Plant Compounds with Interactive Quizzes!</p>
+            <button id="language-toggle" onclick="toggleLanguage()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition shadow-md">
+                Switch to Bahasa Indonesia
+            </button>
+            <div id="google_translate_element"></div>
+        </header>
+
+        <div class="mb-8 border-b border-gray-200">
+            <nav class="flex flex-wrap -mb-px justify-center" aria-label="Tabs">
+                <button onclick="showQuiz(1)" id="tab1" class="tab-button active text-emerald-600 border-b-2 border-emerald-600 whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 focus:outline-none">
+                    <i class="fas fa-flask mr-2"></i>Extraction Fundamentals
+                </button>
+                <button onclick="showQuiz(2)" id="tab2" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-vial mr-2"></i>Solvent Selection
+                </button>
+                <button onclick="showQuiz(3)" id="tab3" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-balance-scale mr-2"></i>Method Pros & Cons
+                </button>
+                <button onclick="showQuiz(4)" id="tab4" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-table mr-2"></i>Miscibility Matrix
+                </button>
+                <button onclick="showQuiz(5)" id="tab5" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-image mr-2"></i>Method Identification
+                </button>
+            </nav>
+        </div>
+
+        <main>
+            <div id="quiz1" class="quiz-container active">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 1: Extraction Fundamentals</h2>
+                    <p class="text-gray-600 mb-6">Test your knowledge of the basics of plant extraction.</p>
+                    <div id="q1-question-area" class="text-center p-4 bg-gray-100 rounded-md min-h-[150px]"></div>
+                    <div class="text-center mt-6">
+                        <button onclick="submitQuiz1Answer()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Submit Answer</button>
+                    </div>
+                    <div id="q1-feedback" class="mt-4 text-center font-medium" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div id="quiz2" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 2: Solvent Selection Challenge</h2>
+                    <p class="text-gray-600 mb-6">Drag each solvent to the correct target compound category.</p>
+                    <div class="mb-6">
+                        <h3 class="font-medium text-center mb-2">Solvents:</h3>
+                        <div id="q2-items" class="flex flex-wrap gap-3 justify-center bg-gray-100 p-4 rounded-md"></div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="non-polar">
+                            <h3 class="font-bold text-lg text-center text-blue-600">Non-polar Compounds</h3>
+                            <p class="text-sm text-center text-gray-500">(e.g., Lipids, Essential Oils)</p>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="medium-polar">
+                            <h3 class="font-bold text-lg text-center text-purple-600">Medium-Polar Compounds</h3>
+                            <p class="text-sm text-center text-gray-500">(e.g., Flavonoids, Terpenoids)</p>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="polar">
+                            <h3 class="font-bold text-lg text-center text-red-600">Polar Compounds</h3>
+                            <p class="text-sm text-center text-gray-500">(e.g., Saponins, Tannins)</p>
+                        </div>
+                    </div>
+                    <div id="q2-feedback" class="mt-6 text-center font-medium" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div id="quiz3" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 3: Method Pros & Cons</h2>
+                    <p class="text-gray-600 mb-6">Drag each statement to the correct extraction method.</p>
+                    <div class="mb-6">
+                        <h3 class="font-medium text-center mb-2">Statements:</h3>
+                        <div id="q3-items" class="flex flex-wrap gap-3 justify-center bg-gray-100 p-4 rounded-md"></div>
+                    </div>
+                    <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[150px] bg-gray-50" data-method="maceration">
+                            <h3 class="font-bold text-lg text-center text-emerald-600">Maceration</h3>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[150px] bg-gray-50" data-method="soxhlet">
+                            <h3 class="font-bold text-lg text-center text-blue-600">Soxhlet Extraction</h3>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[150px] bg-gray-50" data-method="mae">
+                            <h3 class="font-bold text-lg text-center text-purple-600">MAE</h3>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[150px] bg-gray-50" data-method="lle">
+                            <h3 class="font-bold text-lg text-center text-orange-600">LLE</h3>
+                        </div>
+                    </div>
+                    <div id="q3-feedback" class="mt-6 text-center font-medium" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div id="quiz4" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 4: Miscibility Matrix Challenge</h2>
+                    <p class="text-gray-600 mb-6">Use the solvent miscibility matrix to answer the questions.</p>
+                    <div class="overflow-x-auto mb-6">
+                        <table class="min-w-full bg-gray-100 border border-gray-300 rounded-lg shadow-sm">
+                            <thead>
+                                <tr class="bg-gray-200">
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700"></th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">Water</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">MeOH</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">EtOH</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">Acetone</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">EtOAc</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">DCM</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">CHCl₃</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">Hexane</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">PE</th>
+                                    <th class="py-2 px-3 border-b border-gray-300 text-left text-sm font-semibold text-gray-700">n-BuOH</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">Water</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">MeOH</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">EtOH</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">Acetone</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">EtOAc</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">DCM</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">CHCl₃</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">Hexane</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                </tr>
+                                <tr class="bg-white">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">PE</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">I</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                </tr>
+                                <tr class="bg-gray-50">
+                                    <td class="py-2 px-3 border-b border-gray-300 font-semibold">n-BuOH</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">M</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">P</td>
+                                    <td class="py-2 px-3 border-b border-gray-300">–</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="q4-question-area" class="text-center p-4 bg-gray-100 rounded-md min-h-[150px]"></div>
+                    <div class="text-center mt-6">
+                        <button onclick="submitQuiz4Answer()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Submit Answer</button>
+                    </div>
+                    <div id="q4-feedback" class="mt-4 text-center font-medium" aria-live="polite"></div>
+                </div>
+            </div>
+
+            <div id="quiz5" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 5: Method Identification</h2>
+                    <p class="text-gray-600 mb-6">Identify the extraction method shown in each image.</p>
+                    <div id="q5-question-area" class="text-center p-4 bg-gray-100 rounded-md min-h-[300px]"></div>
+                    <div class="text-center mt-6">
+                        <button onclick="submitQuiz5Answer()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Submit Answer</button>
+                    </div>
+                    <div id="q5-feedback" class="mt-4 text-center font-medium" aria-live="polite"></div>
+                </div>
+            </div>
+        </main>
+
+        <div class="text-center mt-10">
+            <button onclick="resetAllQuizzes()" class="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition">
+                <i class="fas fa-redo mr-2"></i>Reset All Quizzes
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuiz = 1;
+        let currentLanguage = 'en';
+
+        const quiz1Data = {
+            questions: [
+                {
+                    question: "What is the main goal of extraction in phytochemistry?",
+                    question_id: "Apa tujuan utama ekstraksi dalam fitokimia?",
+                    options: [
+                        { text: "A. To synthesize new compounds from plant materials.", text_id: "A. Untuk mensintesis senyawa baru dari bahan tanaman." },
+                        { text: "B. To transfer target compounds from solid plant material into a liquid solvent.", text_id: "B. Untuk memindahkan senyawa target dari bahan tanaman padat ke pelarut cair." },
+                        { text: "C. To analyze the elemental composition of plants.", text_id: "C. Untuk menganalisis komposisi unsur tanaman." },
+                        { text: "D. To grow plants in a laboratory setting.", text_id: "D. Untuk menumbuhkan tanaman di lingkungan laboratorium." }
+                    ],
+                    correct: "B. To transfer target compounds from solid plant material into a liquid solvent.",
+                    correct_id: "B. Untuk memindahkan senyawa target dari bahan tanaman padat ke pelarut cair."
+                },
+                {
+                    question: "Which factor generally increases extraction efficiency by increasing surface area?",
+                    question_id: "Faktor apa yang umumnya meningkatkan efisiensi ekstraksi dengan meningkatkan luas permukaan?",
+                    options: [
+                        { text: "A. Decreasing extraction time.", text_id: "A. Mengurangi waktu ekstraksi." },
+                        { text: "B. Using larger plant particles.", text_id: "B. Menggunakan partikel tanaman yang lebih besar." },
+                        { text: "C. Grinding plant material to a smaller particle size.", text_id: "C. Menggiling bahan tanaman menjadi ukuran partikel yang lebih kecil." },
+                        { text: "D. Lowering the temperature.", text_id: "D. Menurunkan suhu." }
+                    ],
+                    correct: "C. Grinding plant material to a smaller particle size.",
+                    correct_id: "C. Menggiling bahan tanaman menjadi ukuran partikel yang lebih kecil."
+                },
+                {
+                    question: "Which solvent is most suitable for extracting highly polar compounds like carbohydrates or hydrophilic phenolics?",
+                    question_id: "Pelarut mana yang paling cocok untuk mengekstrak senyawa sangat polar seperti karbohidrat atau fenolik hidrofilik?",
+                    options: [
+                        { text: "A. n-Hexane", text_id: "A. n-Heksana" },
+                        { text: "B. Ethyl Acetate", text_id: "B. Etil Asetat" },
+                        { text: "C. Water", text_id: "C. Air" },
+                        { text: "D. Chloroform", text_id: "D. Kloroform" }
+                    ],
+                    correct: "C. Water",
+                    correct_id: "C. Air"
+                }
+            ],
+            currentQuestionIndex: 0,
+            score: 0
+        };
+
+        const quiz2Data = {
+            items: [
+                { id: 'q2-item1', text: 'n-Hexane', text_id: 'n-Heksana', category: 'non-polar' },
+                { id: 'q2-item2', text: 'Methanol (MeOH)', text_id: 'Metanol (MeOH)', category: 'polar' },
+                { id: 'q2-item3', text: 'Ethyl Acetate (EtOAc)', text_id: 'Etil Asetat (EtOAc)', category: 'medium-polar' },
+                { id: 'q2-item4', text: 'Water (H₂O)', text_id: 'Air (H₂O)', category: 'polar' },
+                { id: 'q2-item5', text: 'Dichloromethane (DCM)', text_id: 'Diklorometana (DCM)', category: 'medium-polar' },
+                { id: 'q2-item6', text: 'Petroleum Ether', text_id: 'Eter Petroleum', category: 'non-polar' }
+            ],
+            score: 0
+        };
+
+        const quiz3Data = {
+            items: [
+                { id: 'q3-item1', text: 'Simple and inexpensive', text_id: 'Sederhana dan murah', method: 'maceration' },
+                { id: 'q3-item2', text: 'Unsuitable for heat-sensitive compounds', text_id: 'Tidak cocok untuk senyawa sensitif panas', method: 'soxhlet' },
+                { id: 'q3-item3', text: 'Fast (minutes vs. hours)', text_id: 'Cepat (menit vs. jam)', method: 'mae' },
+                { id: 'q3-item4', text: 'Effective for fractionation', text_id: 'Efektif untuk fraksinasi', method: 'lle' },
+                { id: 'q3-item5', text: 'Time-consuming (24–72 hours)', text_id: 'Memakan waktu (24–72 jam)', method: 'maceration' },
+                { id: 'q3-item6', text: 'Minimal solvent loss', text_id: 'Kehilangan pelarut minimal', method: 'soxhlet' },
+                { id: 'q3-item7', text: 'Requires expensive equipment', text_id: 'Memerlukan peralatan mahal', method: 'mae' },
+                { id: 'q3-item8', text: 'Labor-intensive (multiple steps)', text_id: 'Padat karya (beberapa langkah)', method: 'lle' }
+            ],
+            score: 0
+        };
+
+        const quiz4Data = {
+            questions: [
+                {
+                    question: "Which pair of solvents is suitable for liquid-liquid extraction (LLE) to separate polar from non-polar compounds, based on the miscibility matrix?",
+                    question_id: "Pasangan pelarut mana yang cocok untuk ekstraksi cair-cair (LLE) untuk memisahkan senyawa polar dari non-polar, berdasarkan matriks kemiscibilitasan?",
+                    options: [
+                        { text: "A. Water and Methanol (MeOH)", text_id: "A. Air dan Metanol (MeOH)" },
+                        { text: "B. Hexane and Acetone", text_id: "B. Heksana dan Aseton" },
+                        { text: "C. Water and Hexane", text_id: "C. Air dan Heksana" },
+                        { text: "D. Ethanol (EtOH) and Acetone", text_id: "D. Etanol (EtOH) dan Aseton" }
+                    ],
+                    correct: "C. Water and Hexane",
+                    correct_id: "C. Air dan Heksana",
+                    explanation: "Water and Hexane are immiscible (I), allowing for two distinct layers for partitioning polar and non-polar compounds.",
+                    explanation_id: "Air dan Heksana tidak bercampur (I), memungkinkan pembentukan dua lapisan untuk memisahkan senyawa polar dan non-polar."
+                },
+                {
+                    question: "You have an extract in Ethanol (EtOH) and need to transfer a compound to a less polar organic phase using LLE. Which solvent is immiscible with EtOH and suitable for creating two layers?",
+                    question_id: "Anda memiliki ekstrak dalam Etanol (EtOH) dan perlu memindahkan senyawa ke fase organik yang kurang polar menggunakan LLE. Pelarut mana yang tidak bercampur dengan EtOH dan cocok untuk membentuk dua lapisan?",
+                    options: [
+                        { text: "A. Water", text_id: "A. Air" },
+                        { text: "B. Acetone", text_id: "B. Aseton" },
+                        { text: "C. n-Hexane", text_id: "C. n-Heksana" },
+                        { text: "D. Methanol (MeOH)", text_id: "D. Metanol (MeOH)" }
+                    ],
+                    correct: "C. n-Hexane",
+                    correct_id: "C. n-Heksana",
+                    explanation: "Ethanol (EtOH) is partially miscible (P) with Hexane, meaning they will form two layers under certain conditions, making it suitable for LLE. The others are fully miscible (M).",
+                    explanation_id: "Etanol (EtOH) sebagian bercampur (P) dengan Heksana, artinya mereka akan membentuk dua lapisan dalam kondisi tertentu, cocok untuk LLE. Yang lain sepenuhnya bercampur (M)."
+                },
+                {
+                    question: "Which solvent pairs are fully miscible (M) with each other, meaning they would NOT form separate layers in an LLE?",
+                    question_id: "Pasangan pelarut mana yang sepenuhnya bercampur (M) satu sama lain, artinya mereka TIDAK akan membentuk lapisan terpisah dalam LLE?",
+                    options: [
+                        { text: "A. Water and Diethyl Ether", text_id: "A. Air dan Dietil Eter" },
+                        { text: "B. DCM and Chloroform (CHCl₃)", text_id: "B. DCM dan Kloroform (CHCl₃)" },
+                        { text: "C. Water and Chloroform (CHCl₃)", text_id: "C. Air dan Kloroform (CHCl₃)" },
+                        { text: "D. Hexane and Water", text_id: "D. Heksana dan Air" }
+                    ],
+                    correct: "B. DCM and Chloroform (CHCl₃)",
+                    correct_id: "B. DCM dan Kloroform (CHCl₃)",
+                    explanation: "DCM and Chloroform (CHCl₃) are fully miscible (M). The other pairs are immiscible (I) or partially miscible (P) with water.",
+                    explanation_id: "DCM dan Kloroform (CHCl₃) sepenuhnya bercampur (M). Pasangan lain tidak bercampur (I) atau sebagian bercampur (P) dengan air."
+                }
+            ],
+            currentQuestionIndex: 0,
+            score: 0
+        };
+
+        const quiz5Data = {
+            questions: [
+                {
+                    image: "https://i0.wp.com/pediaa.com/wp-content/uploads/2018/07/Difference-Between-Maceration-and-Percolation_Figure1.jpg?resize=553%2C402",
+                    question: "Identify the extraction method shown, characterized by soaking plant material in a solvent at room temperature.",
+                    question_id: "Identifikasi metode ekstraksi yang ditunjukkan, ditandai dengan perendaman bahan tanaman dalam pelarut pada suhu kamar.",
+                    options: [
+                        { text: "A. Soxhlet Extraction", text_id: "A. Ekstraksi Soxhlet" },
+                        { text: "B. Maceration", text_id: "B. Maserasi" },
+                        { text: "C. Microwave-Assisted Extraction", text_id: "C. Ekstraksi Berbantuan Mikrowave" },
+                        { text: "D. Liquid-Liquid Extraction", text_id: "D. Ekstraksi Cair-Cair" }
+                    ],
+                    correct: "B. Maceration",
+                    correct_id: "B. Maserasi"
+                },
+                {
+                    image: "https://ars.els-cdn.com/content/image/3-s2.0-B9780323917926000078-f02-02-9780323917926.jpg",
+                    question: "This apparatus allows continuous extraction using a cycling hot solvent. What method does it represent?",
+                    question_id: "Alat ini memungkinkan ekstraksi terus-menerus menggunakan pelarut panas yang bersirkulasi. Metode apa yang diwakilinya?",
+                    options: [
+                        { text: "A. Maceration", text_id: "A. Maserasi" },
+                        { text: "B. Liquid-Liquid Extraction", text_id: "B. Ekstraksi Cair-Cair" },
+                        { text: "C. Soxhlet Extraction", text_id: "C. Ekstraksi Soxhlet" },
+                        { text: "D. Microwave-Assisted Extraction", text_id: "D. Ekstraksi Berbantuan Mikrowave" }
+                    ],
+                    correct: "C. Soxhlet Extraction",
+                    correct_id: "C. Ekstraksi Soxhlet"
+                },
+                {
+                    image: "https://www.researchgate.net/publication/350295397/figure/fig18/AS:11431281115877314@1675137652633/Microwave-assisted-extraction-MAE-extraction-procedure-Source-adapted-from-63.png",
+                    question: "This method uses rapid heating to rupture cell walls, known for its speed and efficiency. What is it?",
+                    question_id: "Metode ini menggunakan pemanasan cepat untuk memecah dinding sel, dikenal karena kecepatan dan efisiensinya. Apa itu?",
+                    options: [
+                        { text: "A. Maceration", text_id: "A. Maserasi" },
+                        { text: "B. Soxhlet Extraction", text_id: "B. Ekstraksi Soxhlet" },
+                        { text: "C. Microwave-Assisted Extraction (MAE)", text_id: "C. Ekstraksi Berbantuan Mikrowave (MAE)" },
+                        { text: "D. Liquid-Liquid Extraction", text_id: "D. Ekstraksi Cair-Cair" }
+                    ],
+                    correct: "C. Microwave-Assisted Extraction (MAE)",
+                    correct_id: "C. Ekstraksi Berbantuan Mikrowave (MAE)"
+                },
+                {
+                    image: "https://veeprho.com/Liquid-liquid-extraction_LLE-1024x287.jpeg",
+                    question: "This method involves compounds partitioning between two immiscible solvents to separate them. What is it called?",
+                    question_id: "Metode ini melibatkan partisi senyawa antara dua pelarut yang tidak bercampur untuk memisahkannya. Apa namanya?",
+                    options: [
+                        { text: "A. Maceration", text_id: "A. Maserasi" },
+                        { text: "B. Soxhlet Extraction", text_id: "B. Ekstraksi Soxhlet" },
+                        { text: "C. Microwave-Assisted Extraction", text_id: "C. Ekstraksi Berbantuan Mikrowave" },
+                        { text: "D. Liquid-Liquid Extraction (LLE)", text_id: "D. Ekstraksi Cair-Cair (LLE)" }
+                    ],
+                    correct: "D. Liquid-Liquid Extraction (LLE)",
+                    correct_id: "D. Ekstraksi Cair-Cair (LLE)"
+                }
+            ],
+            currentQuestionIndex: 0,
+            score: 0
+        };
+
+        function showQuiz(quizNumber) {
+            currentQuiz = quizNumber;
+            document.querySelectorAll('.quiz-container').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active');
+            });
+            const activeQuiz = document.getElementById(`quiz${quizNumber}`);
+            if (activeQuiz) {
+                activeQuiz.classList.remove('hidden');
+                setTimeout(() => activeQuiz.classList.add('active'), 50);
+            }
+
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active', 'text-emerald-600', 'border-emerald-600'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.add('text-gray-500', 'border-transparent'));
+            const activeTab = document.getElementById(`tab${quizNumber}`);
+            if (activeTab) {
+                activeTab.classList.add('active', 'text-emerald-600', 'border-emerald-600');
+                activeTab.classList.remove('text-gray-500', 'border-transparent');
+                activeTab.focus();
+            }
+
+            updateQuizContent();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 20; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = ['#10b981', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 3)];
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 2000);
+            }
+        }
+
+        function resetAllQuizzes() {
+            initQuiz1();
+            initQuiz2();
+            initQuiz3();
+            initQuiz4();
+            initQuiz5();
+            showQuiz(1);
+        }
+
+        function toggleLanguage() {
+            const selectElement = document.querySelector('.goog-te-combo');
+            const toggleButton = document.getElementById('language-toggle');
+            if (!toggleButton) return;
+            currentLanguage = currentLanguage === 'en' ? 'id' : 'en';
+            toggleButton.textContent = currentLanguage === 'en' ? 'Switch to Bahasa Indonesia' : 'Switch to English';
+            updateQuizContent();
+            if (selectElement) {
+                selectElement.value = currentLanguage;
+                selectElement.dispatchEvent(new Event('change'));
+            } else {
+                console.warn('Google Translate element not found. Using local translations.');
+            }
+        }
+
+        function updateQuizContent() {
+            if (currentQuiz === 1) loadQuiz1Question();
+            if (currentQuiz === 2) {
+                quiz2Data.items.forEach(item => {
+                    const element = document.getElementById(item.id);
+                    if (element) {
+                        element.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                    }
+                });
+            }
+            if (currentQuiz === 3) {
+                quiz3Data.items.forEach(item => {
+                    const element = document.getElementById(item.id);
+                    if (element) {
+                        element.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                    }
+                });
+            }
+            if (currentQuiz === 4) loadQuiz4Question();
+            if (currentQuiz === 5) loadQuiz5Question();
+        }
+
+        function initQuiz1() {
+            quiz1Data.currentQuestionIndex = 0;
+            quiz1Data.score = 0;
+            const feedbackEl = document.getElementById('q1-feedback');
+            if (feedbackEl) feedbackEl.textContent = '';
+            loadQuiz1Question();
+        }
+
+        function loadQuiz1Question() {
+            const questionArea = document.getElementById('q1-question-area');
+            const feedbackEl = document.getElementById('q1-feedback');
+            if (!questionArea || !feedbackEl) return;
+            feedbackEl.textContent = '';
+
+            if (quiz1Data.currentQuestionIndex < quiz1Data.questions.length) {
+                const q = quiz1Data.questions[quiz1Data.currentQuestionIndex];
+                let optionsHTML = '';
+                shuffleArray(q.options);
+                q.options.forEach(option => {
+                    optionsHTML += `
+                        <label class="option-label block text-left p-3 mb-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                            <input type="radio" name="q1-option" value="${currentLanguage === 'en' ? option.text : option.text_id}" class="mr-2">
+                            ${currentLanguage === 'en' ? option.text : option.text_id}
+                        </label>
+                    `;
+                });
+
+                questionArea.innerHTML = `
+                    <p class="text-sm text-gray-600 mb-2">${currentLanguage === 'en' ? `Question ${quiz1Data.currentQuestionIndex + 1} of ${quiz1Data.questions.length}` : `Pertanyaan ${quiz1Data.currentQuestionIndex + 1} dari ${quiz1Data.questions.length}`}</p>
+                    <h3 class="font-semibold text-lg mb-4">${quiz1Data.currentQuestionIndex + 1}. ${currentLanguage === 'en' ? q.question : q.question_id}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                `;
+                document.querySelector('#quiz1 button').style.display = 'block';
+            } else {
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-xl mb-4">${currentLanguage === 'en' ? 'Quiz Completed!' : 'Kuis Selesai!'}</h3>
+                    <p class="text-lg">${currentLanguage === 'en' ? `You scored ${quiz1Data.score} out of ${quiz1Data.questions.length} questions correctly.` : `Anda mencetak ${quiz1Data.score} dari ${quiz1Data.questions.length} pertanyaan dengan benar.`}</p>
+                    <button onclick="initQuiz1()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition">${currentLanguage === 'en' ? 'Restart Quiz 1' : 'Ulangi Kuis 1'}</button>
+                `;
+                document.querySelector('#quiz1 button').style.display = 'none';
+            }
+        }
+
+        function submitQuiz1Answer() {
+            const selectedOption = document.querySelector('input[name="q1-option"]:checked');
+            const feedbackEl = document.getElementById('q1-feedback');
+            if (!feedbackEl) return;
+
+            if (!selectedOption) {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Please select an answer!' : 'Harap pilih jawaban!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-orange-600';
+                return;
+            }
+
+            const userAnswer = selectedOption.value;
+            const currentQ = quiz1Data.questions[quiz1Data.currentQuestionIndex];
+
+            document.querySelectorAll('input[name="q1-option"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                    label.classList.add('bg-green-200', 'border-green-400', 'feedback-correct');
+                } else if (input.checked) {
+                    label.classList.add('bg-red-200', 'border-red-400', 'feedback-incorrect');
+                }
+                input.disabled = true;
+            });
+
+            if (userAnswer === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                quiz1Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct!' : 'Benar!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' ? `Incorrect. The correct answer was: ${currentQ.correct}` : `Salah. Jawaban yang benar adalah: ${currentQ.correct_id}`;
+                feedbackEl.className = 'mt-4 text-center font-medium text-red-600';
+            }
+
+            setTimeout(() => {
+                quiz1Data.currentQuestionIndex++;
+                loadQuiz1Question();
+            }, 1500);
+        }
+
+        function initQuiz2() {
+            quiz2Data.score = 0;
+            const itemsContainer = document.getElementById('q2-items');
+            if (!itemsContainer) return;
+            itemsContainer.innerHTML = '';
+            document.querySelectorAll('#quiz2 .drop-zone').forEach(zone => {
+                while (zone.children.length > 2) {
+                    zone.removeChild(zone.lastChild);
+                }
+            });
+            const feedbackEl = document.getElementById('q2-feedback');
+            if (feedbackEl) feedbackEl.textContent = '';
+
+            const shuffledItems = [...quiz2Data.items];
+            shuffleArray(shuffledItems);
+
+            shuffledItems.forEach(item => {
+                const div = document.createElement('div');
+                div.id = item.id;
+                div.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                div.className = 'draggable bg-blue-100 text-blue-800 py-2 px-4 rounded-full cursor-grab active:cursor-grabbing shadow-sm';
+                div.draggable = true;
+                div.setAttribute('aria-label', currentLanguage === 'en' ? `Drag ${item.text} to a category` : `Seret ${item.text_id} ke kategori`);
+                itemsContainer.appendChild(div);
+            });
+
+            addDragListeners2();
+        }
+
+        function addDragListeners2() {
+            document.querySelectorAll('#quiz2 .draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart2);
+                item.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') {
+                        e.target.focus();
+                        handleDragStart2({ dataTransfer: { setData: () => {} }, target: e.target });
+                    }
+                });
+            });
+
+            document.querySelectorAll('#quiz2 .drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver2);
+                zone.addEventListener('dragleave', handleDragLeave2);
+                zone.addEventListener('drop', handleDrop2);
+            });
+        }
+
+        function handleDragStart2(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function handleDragOver2(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave2(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop2(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (draggableElement && !dropZone.contains(draggableElement)) {
+                if (draggableElement.parentNode.id === 'q2-items') {
+                    dropZone.appendChild(draggableElement);
+                } else {
+                    const originalParent = draggableElement.parentNode;
+                    originalParent.removeChild(draggableElement);
+                    dropZone.appendChild(draggableElement);
+                }
+                draggableElement.classList.add('feedback-correct');
+                setTimeout(() => draggableElement.classList.remove('feedback-correct'), 500);
+            }
+            checkQuiz2Completion();
+        }
+
+        function checkQuiz2Completion() {
+            const itemsContainer = document.getElementById('q2-items');
+            if (!itemsContainer) return;
+            if (itemsContainer.children.length === 0) {
+                let correctCount = 0;
+                quiz2Data.items.forEach(item => {
+                    const element = document.getElementById(item.id);
+                    const parentCategory = element.parentElement.dataset.category;
+                    if (parentCategory === item.category) {
+                        correctCount++;
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-green-100', 'text-green-800', 'feedback-correct');
+                    } else {
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-red-100', 'text-red-800', 'feedback-incorrect');
+                    }
+                });
+                quiz2Data.score = correctCount;
+                const feedbackEl = document.getElementById('q2-feedback');
+                if (feedbackEl) {
+                    feedbackEl.textContent = currentLanguage === 'en' 
+                        ? `You correctly sorted ${quiz2Data.score} out of ${quiz2Data.items.length} items!`
+                        : `Anda mengurutkan ${quiz2Data.score} dari ${quiz2Data.items.length} item dengan benar!`;
+                    feedbackEl.className = quiz2Data.score === quiz2Data.items.length ? 'mt-6 text-center font-medium text-green-600' : 'mt-6 text-center font-medium text-red-600';
+                    if (quiz2Data.score === quiz2Data.items.length) createConfetti();
+                }
+            }
+        }
+
+        function initQuiz3() {
+            quiz3Data.score = 0;
+            const itemsContainer = document.getElementById('q3-items');
+            if (!itemsContainer) return;
+            itemsContainer.innerHTML = '';
+            document.querySelectorAll('#quiz3 .drop-zone').forEach(zone => {
+                while (zone.children.length > 1) {
+                    zone.removeChild(zone.lastChild);
+                }
+            });
+            const feedbackEl = document.getElementById('q3-feedback');
+            if (feedbackEl) feedbackEl.textContent = '';
+
+            const shuffledItems = [...quiz3Data.items];
+            shuffleArray(shuffledItems);
+
+            shuffledItems.forEach(item => {
+                const div = document.createElement('div');
+                div.id = item.id;
+                div.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                div.className = 'draggable bg-blue-100 text-blue-800 py-2 px-4 rounded-full cursor-grab active:cursor-grabbing shadow-sm';
+                div.draggable = true;
+                div.setAttribute('aria-label', currentLanguage === 'en' ? `Drag ${item.text} to a method` : `Seret ${item.text_id} ke metode`);
+                itemsContainer.appendChild(div);
+            });
+
+            addDragListeners3();
+        }
+
+        function addDragListeners3() {
+            document.querySelectorAll('#quiz3 .draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart3);
+                item.addEventListener('keydown', e => {
+                    if (e.key === 'Enter') {
+                        e.target.focus();
+                        handleDragStart3({ dataTransfer: { setData: () => {} }, target: e.target });
+                    }
+                });
+            });
+
+            document.querySelectorAll('#quiz3 .drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver3);
+                zone.addEventListener('dragleave', handleDragLeave3);
+                zone.addEventListener('drop', handleDrop3);
+            });
+        }
+
+        function handleDragStart3(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function handleDragOver3(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave3(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop3(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (draggableElement && !dropZone.contains(draggableElement)) {
+                if (draggableElement.parentNode.id === 'q3-items') {
+                    dropZone.appendChild(draggableElement);
+                } else {
+                    const originalParent = draggableElement.parentNode;
+                    originalParent.removeChild(draggableElement);
+                    dropZone.appendChild(draggableElement);
+                }
+                draggableElement.classList.add('feedback-correct');
+                setTimeout(() => draggableElement.classList.remove('feedback-correct'), 500);
+            }
+            checkQuiz3Completion();
+        }
+
+        function checkQuiz3Completion() {
+            const itemsContainer = document.getElementById('q3-items');
+            if (!itemsContainer) return;
+            if (itemsContainer.children.length === 0) {
+                let correctCount = 0;
+                quiz3Data.items.forEach(item => {
+                    const element = document.getElementById(item.id);
+                    const parentMethod = element.parentElement.dataset.method;
+                    if (parentMethod === item.method) {
+                        correctCount++;
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-green-100', 'text-green-800', 'feedback-correct');
+                    } else {
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-red-100', 'text-red-800', 'feedback-incorrect');
+                    }
+                });
+                quiz3Data.score = correctCount;
+                const feedbackEl = document.getElementById('q3-feedback');
+                if (feedbackEl) {
+                    feedbackEl.textContent = currentLanguage === 'en' 
+                        ? `You correctly sorted ${quiz3Data.score} out of ${quiz3Data.items.length} items!`
+                        : `Anda mengurutkan ${quiz3Data.score} dari ${quiz3Data.items.length} item dengan benar!`;
+                    feedbackEl.className = quiz3Data.score === quiz3Data.items.length ? 'mt-6 text-center font-medium text-green-600' : 'mt-6 text-center font-medium text-red-600';
+                    if (quiz3Data.score === quiz3Data.items.length) createConfetti();
+                }
+            }
+        }
+
+        function initQuiz4() {
+            quiz4Data.currentQuestionIndex = 0;
+            quiz4Data.score = 0;
+            const feedbackEl = document.getElementById('q4-feedback');
+            if (feedbackEl) feedbackEl.textContent = '';
+            loadQuiz4Question();
+        }
+
+        function loadQuiz4Question() {
+            const questionArea = document.getElementById('q4-question-area');
+            const feedbackEl = document.getElementById('q4-feedback');
+            if (!questionArea || !feedbackEl) return;
+            feedbackEl.textContent = '';
+
+            if (quiz4Data.currentQuestionIndex < quiz4Data.questions.length) {
+                const q = quiz4Data.questions[quiz4Data.currentQuestionIndex];
+                let optionsHTML = '';
+                shuffleArray(q.options);
+                q.options.forEach(option => {
+                    optionsHTML += `
+                        <label class="option-label block text-left p-3 mb-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                            <input type="radio" name="q4-option" value="${currentLanguage === 'en' ? option.text : option.text_id}" class="mr-2">
+                            ${currentLanguage === 'en' ? option.text : option.text_id}
+                        </label>
+                    `;
+                });
+
+                questionArea.innerHTML = `
+                    <p class="text-sm text-gray-600 mb-2">${currentLanguage === 'en' ? `Question ${quiz4Data.currentQuestionIndex + 1} of ${quiz4Data.questions.length}` : `Pertanyaan ${quiz4Data.currentQuestionIndex + 1} dari ${quiz4Data.questions.length}`}</p>
+                    <h3 class="font-semibold text-lg mb-4">${quiz4Data.currentQuestionIndex + 1}. ${currentLanguage === 'en' ? q.question : q.question_id}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                `;
+                document.querySelector('#quiz4 button').style.display = 'block';
+            } else {
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-xl mb-4">${currentLanguage === 'en' ? 'Quiz Completed!' : 'Kuis Selesai!'}</h3>
+                    <p class="text-lg">${currentLanguage === 'en' ? `You scored ${quiz4Data.score} out of ${quiz4Data.questions.length} questions correctly.` : `Anda mencetak ${quiz4Data.score} dari ${quiz4Data.questions.length} pertanyaan dengan benar.`}</p>
+                    <button onclick="initQuiz4()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition">${currentLanguage === 'en' ? 'Restart Quiz 4' : 'Ulangi Kuis 4'}</button>
+                `;
+                document.querySelector('#quiz4 button').style.display = 'none';
+            }
+        }
+
+        function submitQuiz4Answer() {
+            const selectedOption = document.querySelector('input[name="q4-option"]:checked');
+            const feedbackEl = document.getElementById('q4-feedback');
+            if (!feedbackEl) return;
+
+            if (!selectedOption) {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Please select an answer!' : 'Harap pilih jawaban!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-orange-600';
+                return;
+            }
+
+            const userAnswer = selectedOption.value;
+            const currentQ = quiz4Data.questions[quiz4Data.currentQuestionIndex];
+
+            document.querySelectorAll('input[name="q4-option"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                    label.classList.add('bg-green-200', 'border-green-400', 'feedback-correct');
+                } else if (input.checked) {
+                    label.classList.add('bg-red-200', 'border-red-400', 'feedback-incorrect');
+                }
+                input.disabled = true;
+            });
+
+            if (userAnswer === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                quiz4Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct!' : 'Benar!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `Incorrect. The correct answer was: ${currentQ.correct}. ${currentQ.explanation}`
+                    : `Salah. Jawaban yang benar adalah: ${currentQ.correct_id}. ${currentQ.explanation_id}`;
+                feedbackEl.className = 'mt-4 text-center font-medium text-red-600';
+            }
+
+            setTimeout(() => {
+                quiz4Data.currentQuestionIndex++;
+                loadQuiz4Question();
+            }, 2500);
+        }
+
+        function initQuiz5() {
+            quiz5Data.currentQuestionIndex = 0;
+            quiz5Data.score = 0;
+            const feedbackEl = document.getElementById('q5-feedback');
+            if (feedbackEl) feedbackEl.textContent = '';
+            loadQuiz5Question();
+        }
+
+        function loadQuiz5Question() {
+            const questionArea = document.getElementById('q5-question-area');
+            const feedbackEl = document.getElementById('q5-feedback');
+            if (!questionArea || !feedbackEl) return;
+            feedbackEl.textContent = '';
+
+            if (quiz5Data.currentQuestionIndex < quiz5Data.questions.length) {
+                const q = quiz5Data.questions[quiz5Data.currentQuestionIndex];
+                let optionsHTML = '';
+                shuffleArray(q.options);
+                q.options.forEach(option => {
+                    optionsHTML += `
+                        <label class="option-label block text-left p-3 mb-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                            <input type="radio" name="q5-option" value="${currentLanguage === 'en' ? option.text : option.text_id}" class="mr-2">
+                            ${currentLanguage === 'en' ? option.text : option.text_id}
+                        </label>
+                    `;
+                });
+
+                questionArea.innerHTML = `
+                    <p class="text-sm text-gray-600 mb-2">${currentLanguage === 'en' ? `Question ${quiz5Data.currentQuestionIndex + 1} of ${quiz5Data.questions.length}` : `Pertanyaan ${quiz5Data.currentQuestionIndex + 1} dari ${quiz5Data.questions.length}`}</p>
+                    <img src="${q.image}" alt="${currentLanguage === 'en' ? 'Extraction Method Illustration' : 'Ilustrasi Metode Ekstraksi'}" class="w-full h-auto rounded-lg shadow-sm mb-4 max-h-64 object-contain mx-auto" onerror="this.onerror=null;this.src='https://placehold.co/400x200/cccccc/ffffff?text=Image+Not+Found';">
+                    <h3 class="font-semibold text-lg mb-4">${quiz5Data.currentQuestionIndex + 1}. ${currentLanguage === 'en' ? q.question : q.question_id}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                `;
+                document.querySelector('#quiz5 button').style.display = 'block';
+            } else {
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-xl mb-4">${currentLanguage === 'en' ? 'Quiz Completed!' : 'Kuis Selesai!'}</h3>
+                    <p class="text-lg">${currentLanguage === 'en' ? `You scored ${quiz5Data.score} out of ${quiz5Data.questions.length} questions correctly.` : `Anda mencetak ${quiz5Data.score} dari ${quiz5Data.questions.length} pertanyaan dengan benar.`}</p>
+                    <button onclick="initQuiz5()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition">${currentLanguage === 'en' ? 'Restart Quiz 5' : 'Ulangi Kuis 5'}</button>
+                `;
+                document.querySelector('#quiz5 button').style.display = 'none';
+            }
+        }
+
+        function submitQuiz5Answer() {
+            const selectedOption = document.querySelector('input[name="q5-option"]:checked');
+            const feedbackEl = document.getElementById('q5-feedback');
+            if (!feedbackEl) return;
+
+            if (!selectedOption) {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Please select an answer!' : 'Harap pilih jawaban!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-orange-600';
+                return;
+            }
+
+            const userAnswer = selectedOption.value;
+            const currentQ = quiz5Data.questions[quiz5Data.currentQuestionIndex];
+
+            document.querySelectorAll('input[name="q5-option"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                    label.classList.add('bg-green-200', 'border-green-400', 'feedback-correct');
+                } else if (input.checked) {
+                    label.classList.add('bg-red-200', 'border-red-400', 'feedback-incorrect');
+                }
+                input.disabled = true;
+            });
+
+            if (userAnswer === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                quiz5Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct!' : 'Benar!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `Incorrect. The correct answer was: ${currentQ.correct}`
+                    : `Salah. Jawaban yang benar adalah: ${currentQ.correct_id}`;
+                feedbackEl.className = 'mt-4 text-center font-medium text-red-600';
+            }
+
+            setTimeout(() => {
+                quiz5Data.currentQuestionIndex++;
+                loadQuiz5Question();
+            }, 1500);
+        }
+
+        function googleTranslateElementInit() {
+            if (typeof google !== 'undefined' && google.translate) {
+                new google.translate.TranslateElement({
+                    pageLanguage: 'en',
+                    includedLanguages: 'en,id',
+                    layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+                }, 'google_translate_element');
+            } else {
+                console.warn('Google Translate not available. Using local translations.');
+            }
+        }
+
+        window.onload = function() {
+            initQuiz1();
+            initQuiz2();
+            initQuiz3();
+            initQuiz4();
+            initQuiz5();
+            showQuiz(1);
+        };
+    </script>
+    <script async type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>

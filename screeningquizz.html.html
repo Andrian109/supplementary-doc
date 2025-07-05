@@ -1,0 +1,725 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comprehensive Phytochemical Screening Resource</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #e0f7fa, #a7f3d0);
+      margin: 0;
+      padding: 20px;
+      position: relative;
+      overflow-x: hidden;
+    }
+    h1, h2, h3 {
+      text-align: center;
+      color: #1b4332;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    .screen {
+      display: none;
+      background-color: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+      padding: 25px;
+      margin: 20px auto;
+      max-width: 800px;
+      opacity: 0;
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+    .screen.active {
+      display: block;
+      opacity: 1;
+      transform: translateY(0);
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .quiz-container {
+      max-width: 850px;
+      margin: 0 auto;
+      background-color: #f0fdf4;
+      border: 3px solid #10b981;
+      border-radius: 15px;
+      padding: 25px;
+      position: relative;
+    }
+    .question {
+      margin-bottom: 25px;
+      animation: slideIn 0.5s ease-in-out;
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    .question h2 {
+      color: #047857;
+      font-size: 1.5em;
+    }
+    .options label {
+      display: block;
+      padding: 10px;
+      margin: 8px 0;
+      background-color: #d1fae5;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s, transform 0.2s;
+      animation: slideIn 0.5s ease-in-out;
+    }
+    .options label:hover {
+      background-color: #a7f3d0;
+      transform: scale(1.02);
+    }
+    .options label.correct {
+      background-color: #6ee7b7 !important;
+      animation: flashCorrect 0.5s;
+    }
+    .options label.incorrect {
+      background-color: #fecaca !important;
+      animation: flashIncorrect 0.5s;
+    }
+    @keyframes flashCorrect {
+      0% { background-color: #d1fae5; }
+      50% { background-color: #6ee7b7; }
+      100% { background-color: #6ee7b7; }
+    }
+    @keyframes flashIncorrect {
+      0% { background-color: #d1fae5; }
+      50% { background-color: #fecaca; }
+      100% { background-color: #fecaca; }
+    }
+    .nav-buttons {
+      text-align: center;
+      margin-top: 25px;
+    }
+    .nav-buttons button, .quiz-container button {
+      margin: 10px;
+      padding: 12px 25px;
+      background-color: #2d6a4f;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: transform 0.2s, background-color 0.3s;
+    }
+    .nav-buttons button:hover, .quiz-container button:hover {
+      background-color: #1b4332;
+      transform: scale(1.05);
+    }
+    .nav-buttons button:active, .quiz-container button:active {
+      transform: scale(0.95);
+    }
+    .progress {
+      text-align: center;
+      margin-bottom: 20px;
+      color: #065f46;
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    #quiz-progress-bar {
+      width: 100%;
+      height: 10px;
+      background-color: #e5e7eb;
+      border-radius: 5px;
+      overflow: hidden;
+      margin-bottom: 15px;
+    }
+    #quiz-progress-fill {
+      height: 100%;
+      background-color: #10b981;
+      transition: width 0.5s ease-in-out;
+    }
+    #result {
+      display: none;
+      margin-top: 20px;
+      padding: 20px;
+      background-color: #d1fae5;
+      color: #065f46;
+      border-radius: 12px;
+      animation: fadeIn 0.5s ease-in-out;
+    }
+    .match-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 30px;
+    }
+    .match-table td, .match-table th {
+      border: 2px solid #065f46;
+      padding: 12px;
+      text-align: center;
+    }
+    .match-table select {
+      width: 100%;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #10b981;
+    }
+    .particles {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: -1;
+    }
+    .particle {
+      position: absolute;
+      background: rgba(16, 185, 129, 0.3);
+      border-radius: 50%;
+      animation: float 15s infinite linear;
+    }
+    @keyframes float {
+      0% { transform: translateY(100vh) scale(1); }
+      100% { transform: translateY(-10vh) scale(0.5); opacity: 0; }
+    }
+    @media (max-width: 600px) {
+      .screen, .quiz-container {
+        padding: 15px;
+        margin: 10px;
+      }
+      .nav-buttons button, .quiz-container button {
+        padding: 10px 15px;
+        font-size: 0.9em;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="particles" id="particles"></div>
+  <h1>Comprehensive Phytochemical Screening Resource</h1>
+  
+  <!-- Protocol Screens -->
+  <div id="screen1" class="screen active">
+    <div class="protocol">
+      <h3>Screen 1 of 6: General Extraction Protocols</h3>
+      <h4>1. Ethanolic Extraction</h4>
+      <p><strong>Objective:</strong> To extract less-polar to semi-polar compounds such as flavonoids and terpenoids.</p>
+      <p><strong>Refinement:</strong> Use 70–80% ethanol to capture a broader range of phenolics.</p>
+      <ol>
+        <li>Weigh 20 g of finely powdered plant material.</li>
+        <li>Place in a 250 mL conical flask. Add 200 mL of 70% ethanol.</li>
+        <li>Seal and macerate for 48 hours with intermittent shaking (every 6–8 hours).</li>
+        <li>Filter using Whatman No. 1 filter paper.</li>
+        <li>Store the clear filtrate (ethanolic extract) appropriately.</li>
+      </ol>
+      <h4>2. Aqueous Extraction</h4>
+      <p><strong>Objective:</strong> To extract highly polar compounds like saponins and tannins.</p>
+      <p><strong>Refinement:</strong> Use hot water to prevent enzymatic degradation of certain compounds.</p>
+      <ol>
+        <li>Weigh 1 g of powdered plant material into a beaker.</li>
+        <li>Add 20 mL distilled water and boil in a water bath for 10–15 minutes.</li>
+        <li>Cool and filter. Collect the filtrate as the aqueous extract.</li>
+      </ol>
+    </div>
+  </div>
+  <div id="screen2" class="screen">
+    <div class="protocol">
+      <h3>Screen 2 of 6: Flavonoids & Saponins</h3>
+      <h4>3. Shinoda Test</h4>
+      <p><strong>Objective:</strong> To confirm the presence of flavonoids with minimal interference.</p>
+      <ol>
+        <li>Add 2 mL ethanolic extract to a test tube.</li>
+        <li>Add 5–6 drops concentrated HCl (handle under fume hood).</li>
+        <li>Insert 2–3 pieces of magnesium ribbon.</li>
+        <li><strong>Positive Result:</strong> Rapid color change to orange, red, pink, or crimson.</li>
+      </ol>
+      <h4>4. Froth Test</h4>
+      <p><strong>Objective:</strong> To detect saponins based on stable foam formation.</p>
+      <ol>
+        <li>Place 5 mL aqueous extract in a test tube.</li>
+        <li>Shake vertically for 15 seconds.</li>
+        <li><strong>Positive Result:</strong> Stable foam ≥ 1 cm high lasting ≥ 15 minutes.</li>
+      </ol>
+    </div>
+  </div>
+  <div id="screen3" class="screen">
+    <div class="protocol">
+      <h3>Screen 3 of 6: Alkaloids (Acid-Base Purification)</h3>
+      <h4>5. Acidified Extract Preparation</h4>
+      <p><strong>Objective:</strong> Purify alkaloids before testing to prevent false positives.</p>
+      <ol>
+        <li>Evaporate 5–10 mL ethanolic extract to dryness.</li>
+        <li>Reconstitute in 5 mL of 2N HCl.</li>
+        <li>Filter to obtain a clear solution.</li>
+      </ol>
+      <h4>6. Confirmatory Tests</h4>
+      <ol>
+        <li><strong>Mayer's:</strong> Creamy white/yellow ppt.</li>
+        <li><strong>Wagner's:</strong> Reddish-brown ppt.</li>
+        <li><strong>Dragendorff's:</strong> Orange-red ppt.</li>
+      </ol>
+      <p><strong>Interpretation:</strong> Two positive results out of three confirm alkaloids.</p>
+    </div>
+  </div>
+  <div id="screen4" class="screen">
+    <div class="protocol">
+      <h3>Screen 4 of 6: Tannins & Phenolics</h3>
+      <h4>7. Ferric Chloride Test</h4>
+      <p><strong>Objective:</strong> Identify tannin classes via distinct color formation.</p>
+      <ol>
+        <li>Add 2 mL aqueous extract to a test tube.</li>
+        <li>Add a few drops of 1% FeCl₃ solution.</li>
+        <li><strong>Color Interpretation:</strong><br>
+        Bluish-black → Gallotannins<br>
+        Greenish-black → Condensed tannins</li>
+      </ol>
+      <h4>8. Lead Acetate Test</h4>
+      <p><strong>Objective:</strong> Confirm phenolic presence through precipitation.</p>
+      <ol>
+        <li>Add 3 mL aqueous extract to a test tube.</li>
+        <li>Add drops of 1% lead acetate.</li>
+        <li><strong>Positive Result:</strong> White precipitate confirms phenolics.</li>
+      </ol>
+    </div>
+  </div>
+  <div id="screen5" class="screen">
+    <div class="protocol">
+      <h3>Screen 5 of 6: Terpenoids & Steroids</h3>
+      <h4>9. Salkowski Test</h4>
+      <p><strong>Objective:</strong> Differentiate between terpenoids and steroids using layer-specific colors.</p>
+      <ol>
+        <li>Mix 2 mL ethanolic extract with 2 mL chloroform.</li>
+        <li>Layer 2 mL conc. H₂SO₄ carefully along the tube wall.</li>
+        <li><strong>Observation:</strong><br>
+        Terpenoids → Reddish-brown ring at interface<br>
+        Steroids → Greenish-yellow in upper chloroform layer</li>
+      </ol>
+    </div>
+  </div>
+  <div id="screen6" class="screen">
+    <div class="protocol">
+      <h3>Screen 6 of 6: Glycosides</h3>
+      <h4>10. Keller-Killiani Test</h4>
+      <p><strong>Objective:</strong> Specific detection of cardiac glycosides.</p>
+      <ol>
+        <li>Add 1 mL ethanolic extract to a test tube.</li>
+        <li>Add 2 mL glacial acetic acid + 1–2 drops of 0.1% FeCl₃.</li>
+        <li>Layer 1 mL conc. H₂SO₄ along the tube wall.</li>
+        <li><strong>Positive Result:</strong><br>
+        Reddish-brown ring at interface<br>
+        Bluish-green color in upper layer</li>
+      </ol>
+    </div>
+  </div>
+  
+  <!-- Multiple-Choice Quiz Screen -->
+  <div id="screen7" class="screen">
+    <div class="quiz-container">
+      <h3>Multiple-Choice Quiz</h3>
+      <div id="quiz-progress-bar"><div id="quiz-progress-fill"></div></div>
+      <div id="progress" class="progress"></div>
+      <div id="question-box" class="question"></div>
+      <div class="options"></div>
+      <button onclick="nextQuestion()">Submit Answer</button>
+    </div>
+  </div>
+  
+  <!-- Table-Style Matching Quiz Screen -->
+  <div id="screen8" class="screen">
+    <div class="quiz-container">
+      <h3>Matching Quiz: Guess the Reagent and Expected Result</h3>
+      <table class="match-table">
+        <tr><th>Test</th><th>Reagent</th><th>Expected Result</th></tr>
+        <tr>
+          <td>Flavonoids</td>
+          <td><select><option>Select...</option><option>Dragendorff’s reagent</option><option>Mg + conc. HCl</option><option>CHCl₃ + conc. H₂SO₄</option></select></td>
+          <td><select><option>Select...</option><option>Stable foam</option><option>Pink-red color</option><option>Orange-brown precipitate</option></select></td>
+        </tr>
+        <tr>
+          <td>Alkaloids</td>
+          <td><select><option>Select...</option><option>Dragendorff’s reagent</option><option>Acetic anhydride + H₂SO₄</option><option>FeCl₃</option></select></td>
+          <td><select><option>Select...</option><option>Orange-brown precipitate</option><option>Blue-green color</option><option>Reddish-brown ring</option></select></td>
+        </tr>
+        <tr>
+          <td>Saponins</td>
+          <td><select><option>Select...</option><option>Distilled water (shake)</option><option>Mg + conc. HCl</option><option>FeCl₃</option></select></td>
+          <td><select><option>Select...</option><option>Blue-black color</option><option>Stable foam (>1 cm)</option><option>Reddish-brown ring</option></select></td>
+        </tr>
+        <tr>
+          <td>Tannins</td>
+          <td><select><option>Select...</option><option>FeCl₃</option><option>Lead acetate</option><option>CHCl₃ + conc. H₂SO₄</option></select></td>
+          <td><select><option>Select...</option><option>Orange-red ppt</option><option>Blue-black color</option><option>Foam ring</option></select></td>
+        </tr>
+        <tr>
+          <td>Terpenoids</td>
+          <td><select><option>Select...</option><option>CHCl₃ + conc. H₂SO₄</option><option>Mg + conc. HCl</option><option>Lead acetate</option></select></td>
+          <td><select><option>Select...</option><option>Reddish-brown ring</option><option>Blue-green color</option><option>Pink-red color</option></select></td>
+        </tr>
+        <tr>
+          <td>Steroids</td>
+          <td><select><option>Select...</option><option>Acetic anhydride + H₂SO₄</option><option>FeCl₃</option><option>Distilled water (shake)</option></select></td>
+          <td><select><option>Select...</option><option>Blue-green color</option><option>Stable foam</option><option>Orange-brown precipitate</option></select></td>
+        </tr>
+      </table>
+      <br />
+      <button onclick="submitMatching()">Submit Matching</button>
+    </div>
+  </div>
+  
+  <!-- Feedback Screen -->
+  <div id="screen9" class="screen">
+    <div class="quiz-container">
+      <h3>Feedback and Results</h3>
+      <div id="result"></div>
+      <button onclick="resetQuiz()">Restart Quiz 🔄</button>
+    </div>
+  </div>
+  
+  <!-- Navigation Buttons -->
+  <div class="nav-buttons">
+    <button onclick="prevScreen()">Previous</button>
+    <button onclick="nextScreen()">Next</button>
+    <button onclick="showResults()" id="finish-button" style="display:none">Finish</button>
+  </div>
+
+  <script>
+    // Create particle effect
+    function createParticles() {
+      const particlesDiv = document.getElementById('particles');
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        particle.style.width = `${Math.random() * 10 + 5}px`;
+        particle.style.height = particle.style.width;
+        particle.style.left = `${Math.random() * 100}vw`;
+        particle.style.animationDelay = `${Math.random() * 10}s`;
+        particlesDiv.appendChild(particle);
+      }
+    }
+
+    let currentScreen = 1;
+    const totalScreens = 9;
+    let currentQuestion = 0;
+    let score = 0;
+    let corrections = [];
+
+    const quizData = [
+      {
+        question: "Why prefer 70-80% ethanol over 95% for ethanolic extraction (Refinement for Accuracy)?",
+        options: [
+          "It denatures fewer compounds.",
+          "Water content helps extract broader phenolic compounds.",
+          "It's cheaper.",
+          "It prevents less-polar compound extraction."
+        ],
+        correct: 1,
+        explanation: "Water in 70-80% ethanol aids broader phenolic extraction."
+      },
+      {
+        question: "Why use boiling water for a short duration in Aqueous Extraction (Refinement for Accuracy)?",
+        options: [
+          "To maximize extraction over time.",
+          "To quickly concentrate the extract.",
+          "To prevent enzyme degradation of compounds like phenolics.",
+          "To sterilize the extract."
+        ],
+        correct: 2,
+        explanation: "Boiling for a short time prevents enzyme degradation."
+      },
+      {
+        question: "Which compounds are primarily targeted by Ethanolic vs. Aqueous Extraction?",
+        options: [
+          "Ethanolic: Saponins, Tannins; Aqueous: Flavonoids, Terpenoids.",
+          "Ethanolic: Flavonoids, Terpenoids; Aqueous: Saponins, Tannins.",
+          "Ethanolic: Alkaloids, Glycosides; Aqueous: Phenolic Compounds, Steroids.",
+          "Both target all metabolites equally."
+        ],
+        correct: 1,
+        explanation: "Ethanolic targets flavonoids/terpenoids; aqueous targets saponins/tannins."
+      },
+      {
+        question: "What is the chemical role of Mg ribbon and conc. HCl in Shinoda's Test for Flavonoids?",
+        options: [
+          "Solvent for flavonoids.",
+          "Reducing agent, forming a colored complex.",
+          "pH adjustment for precipitation.",
+          "Foam creation."
+        ],
+        correct: 1,
+        explanation: "Mg and HCl reduce flavonoids, creating color."
+      },
+      {
+        question: "What is the crucial 'Refinement for Accuracy' for Shinoda's Test color change?",
+        options: [
+          "Any color change is positive.",
+          "Color change must be rapid and intense (1-5 min) to avoid false positives.",
+          "Precipitate formation is key.",
+          "Bluish-green confirms."
+        ],
+        correct: 1,
+        explanation: "Rapid and intense color confirms true positive, avoiding false positives from other pigments."
+      },
+      {
+        question: "What is the goal of qualitative phytochemical screening?",
+        options: [
+          "Compound quantification",
+          "Compound isolation",
+          "Rapid identification of metabolite classes for guiding further steps",
+          "Compound synthesis"
+        ],
+        correct: 2,
+        explanation: "It serves as a quick method to detect functional groups/metabolites."
+      },
+      {
+        question: "What is the key principle behind phytochemical reagent tests?",
+        options: [
+          "Reagent degradation",
+          "Reagents form colorless compounds",
+          "Reagents react with functional groups to give visible signals (color/foam/precipitate)",
+          "Reagents act as catalysts"
+        ],
+        correct: 2,
+        explanation: "Reagents form visible complexes or cause precipitation when reacting with certain metabolites."
+      },
+      {
+        question: "How are terpenoids and steroids identified in Salkowski's Test?",
+        options: [
+          "Both give white precipitates",
+          "Terpenoids: reddish-brown ring at interface; Steroids: greenish-yellow fluorescence in upper layer.",
+          "Both give blue/green color",
+          "Both create stable foam"
+        ],
+        correct: 1,
+        explanation: "Their color reactions and layer position help differentiate them."
+      },
+      {
+        question: "In Ferric Chloride Test, how are tannin classes identified?",
+        options: [
+          "Blue-black = condensed; Green-black = gallotannins",
+          "Blue-black = gallotannins; Green-black = condensed tannins",
+          "Both = general phenolics",
+          "No color = tannin-free"
+        ],
+        correct: 1,
+        explanation: "Color variation differentiates between hydrolyzable and condensed tannins."
+      }
+    ];
+
+    function updateScreens() {
+      try {
+        for (let i = 1; i <= totalScreens; i++) {
+          const screen = document.getElementById(`screen${i}`);
+          if (screen) screen.classList.remove('active');
+        }
+        const currentScreenElement = document.getElementById(`screen${currentScreen}`);
+        if (currentScreenElement) {
+          currentScreenElement.classList.add('active');
+        } else {
+          console.error(`Screen ${currentScreen} not found`);
+          alert("Error: Screen not found. Please try again.");
+          return;
+        }
+        document.getElementById('finish-button').style.display = currentScreen === 8 ? 'inline-block' : 'none';
+        if (currentScreen === 7) {
+          loadQuestion();
+        }
+        if (currentScreen === 9) {
+          displayResults();
+        }
+        console.log(`Updated to screen ${currentScreen}`);
+      } catch (error) {
+        console.error("Error updating screens:", error);
+        alert("An error occurred while navigating. Please try again.");
+      }
+    }
+
+    function nextScreen() {
+      try {
+        console.log(`Attempting to move to next screen from screen ${currentScreen}, question ${currentQuestion}`);
+        if (currentScreen === 7) {
+          if (currentQuestion < quizData.length) {
+            nextQuestion();
+            return;
+          } else {
+            currentQuestion = 0;
+            currentScreen = 8;
+          }
+        } else if (currentScreen < totalScreens) {
+          currentScreen++;
+        }
+        updateScreens();
+      } catch (error) {
+        console.error("Error navigating to next screen:", error);
+        alert("An error occurred while navigating. Please try again.");
+      }
+    }
+
+    function prevScreen() {
+      try {
+        console.log(`Attempting to move to previous screen from screen ${currentScreen}, question ${currentQuestion}`);
+        if (currentScreen === 7 && currentQuestion > 0) {
+          currentQuestion--;
+          loadQuestion();
+          return;
+        }
+        if (currentScreen > 1) {
+          currentScreen--;
+          updateScreens();
+        }
+      } catch (error) {
+        console.error("Error navigating to previous screen:", error);
+        alert("An error occurred while navigating. Please try again.");
+      }
+    }
+
+    function loadQuestion() {
+      try {
+        const questionBox = document.getElementById("question-box");
+        const optionsBox = document.querySelector(".options");
+        const progress = document.getElementById("progress");
+        const progressFill = document.getElementById("quiz-progress-fill");
+
+        if (currentQuestion < quizData.length) {
+          const q = quizData[currentQuestion];
+          questionBox.innerHTML = `<h2>${q.question}</h2>`;
+          optionsBox.innerHTML = "";
+          progress.textContent = `Question ${currentQuestion + 1} of ${quizData.length}`;
+          progressFill.style.width = `${((currentQuestion + 1) / quizData.length) * 100}%`;
+
+          q.options.forEach((option, i) => {
+            const label = document.createElement("label");
+            label.innerHTML = `<input type='radio' name='option' value='${i}' /> ${option}`;
+            optionsBox.appendChild(label);
+          });
+          console.log(`Loaded question ${currentQuestion + 1}`);
+        } else {
+          currentScreen = 8;
+          updateScreens();
+        }
+      } catch (error) {
+        console.error("Error loading question:", error);
+        alert("An error occurred while loading the quiz. Please try again.");
+      }
+    }
+
+    function nextQuestion() {
+      try {
+        const selected = document.querySelector("input[name='option']:checked");
+        if (!selected) {
+          alert("Please select an answer!");
+          return;
+        }
+        const answer = parseInt(selected.value);
+        const q = quizData[currentQuestion];
+        const labels = document.querySelectorAll(".options label");
+        labels.forEach((label, i) => {
+          if (i === q.correct) {
+            label.classList.add('correct');
+          } else if (i === answer) {
+            label.classList.add('incorrect');
+          }
+        });
+        if (answer === q.correct) {
+          score++;
+        } else {
+          corrections.push(`<p><strong>Q:</strong> ${q.question}<br><strong>Your Answer:</strong> ${q.options[answer]}<br><strong>Correct Answer:</strong> ${q.options[q.correct]}<br><strong>Explanation:</strong> ${q.explanation}</p>`);
+        }
+        setTimeout(() => {
+          currentQuestion++;
+          loadQuestion();
+          labels.forEach(label => {
+            label.classList.remove('correct', 'incorrect');
+          });
+        }, 1000);
+        console.log(`Processed question ${currentQuestion + 1}, moving to next`);
+      } catch (error) {
+        console.error("Error processing answer:", error);
+        alert("An error occurred while processing your answer. Please try again.");
+      }
+    }
+
+    function submitMatching() {
+      try {
+        const correctAnswers = {
+          Flavonoids: ["Mg + conc. HCl", "Pink-red color"],
+          Alkaloids: ["Dragendorff’s reagent", "Orange-brown precipitate"],
+          Saponins: ["Distilled water (shake)", "Stable foam (>1 cm)"],
+          Tannins: ["FeCl₃", "Blue-black color"],
+          Terpenoids: ["CHCl₃ + conc. H₂SO₄", "Reddish-brown ring"],
+          Steroids: ["Acetic anhydride + H₂SO₄", "Blue-green color"]
+        };
+
+        const rows = document.querySelectorAll(".match-table tr");
+        let allSelected = true;
+        rows.forEach((row, index) => {
+          if (index === 0) return;
+          const test = row.cells[0].textContent.trim();
+          const reagent = row.cells[1].querySelector("select").value.trim();
+          const result = row.cells[2].querySelector("select").value.trim();
+          if (reagent === "Select..." || result === "Select...") {
+            allSelected = false;
+            return;
+          }
+          if (
+            reagent === correctAnswers[test][0] &&
+            result === correctAnswers[test][1]
+          ) {
+            score++;
+          } else {
+            corrections.push(`<p><strong>Test:</strong> ${test}<br><strong>Your Reagent:</strong> ${reagent}<br><strong>Expected:</strong> ${correctAnswers[test][0]}<br><strong>Your Result:</strong> ${result}<br><strong>Expected:</strong> ${correctAnswers[test][1]}</p>`);
+          }
+        });
+
+        if (!allSelected) {
+          alert("Please select an option for all matching activity fields!");
+          return;
+        }
+        currentScreen = 9;
+        updateScreens();
+      } catch (error) {
+        console.error("Error submitting matching:", error);
+        alert("An error occurred while submitting the matching quiz. Please try again.");
+      }
+    }
+
+    function showResults() {
+      if (currentScreen !== 8) return;
+      submitMatching();
+    }
+
+    function displayResults() {
+      try {
+        const result = document.getElementById("result");
+        const totalQuestions = quizData.length + 6; // 9 MCQs + 6 matching
+        const percent = Math.round((score / totalQuestions) * 100);
+        let feedback = "Great job! 🌿 You have a strong understanding of phytochemical screening.";
+        if (percent < 80) feedback = "Good try! 🌱 Review the tests again to improve your accuracy.";
+        result.style.display = "block";
+        result.innerHTML = `<h2>✅ Quiz Completed!</h2><p>You scored ${score} out of ${totalQuestions} (${percent}%).</p><p><strong>Feedback:</strong> ${feedback}</p><hr><h3>🔍 Corrections & Explanations:</h3>${corrections.join('')}`;
+      } catch (error) {
+        console.error("Error displaying results:", error);
+        alert("An error occurred while displaying results. Please try again.");
+      }
+    }
+
+    function resetQuiz() {
+      try {
+        currentScreen = 1;
+        currentQuestion = 0;
+        score = 0;
+        corrections = [];
+        document.getElementById("result").style.display = "none";
+        document.querySelector(".options").style.display = "block";
+        document.getElementById("question-box").style.display = "block";
+        document.getElementById("progress").style.display = "block";
+        const selects = document.querySelectorAll(".match-table select");
+        selects.forEach(select => select.value = "Select...");
+        updateScreens();
+      } catch (error) {
+        console.error("Error resetting quiz:", error);
+        alert("An error occurred while resetting the quiz. Please try again.");
+      }
+    }
+
+    window.onload = () => {
+      createParticles();
+      updateScreens();
+    };
+  </script>
+</body>
+</html>

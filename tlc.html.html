@@ -1,0 +1,864 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Phytolab TLC Adventure - Explore the Magic of TLC!</title>
+  <style>
+    body {
+      font-family: 'Comic Sans MS', 'Arial', sans-serif;
+      padding: 20px;
+      background: linear-gradient(135deg, #a2e8f0, #e0f7fa);
+      color: #2c3e50;
+      max-width: 900px;
+      margin: auto;
+      overflow-x: hidden;
+    }
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      color: #27ae60;
+      text-shadow: 2px 2px #ecf0f1;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+    .tab-button {
+      padding: 12px 25px;
+      cursor: pointer;
+      background: #3498db;
+      border: none;
+      border-radius: 15px;
+      color: white;
+      font-weight: bold;
+      transition: transform 0.3s, background 0.3s;
+    }
+    .tab-button:hover {
+      transform: scale(1.1);
+      background: #2980b9;
+    }
+    .tab-button.active {
+      background: #27ae60;
+      transform: scale(1.1);
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content:not(.hidden) {
+      display: block;
+    }
+    .section-wrapper {
+      background: rgba(255, 255, 255, 0.9);
+      padding: 25px;
+      border-radius: 15px;
+      margin: 20px auto;
+      max-width: 650px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+      border: 2px solid #27ae60;
+      animation: glow 3s infinite alternate;
+    }
+    @keyframes glow {
+      from { box-shadow: 0 0 5px #27ae60; }
+      to { box-shadow: 0 0 15px #27ae60; }
+    }
+    h2, h3 {
+      color: #e74c3c;
+      text-align: center;
+      text-transform: uppercase;
+    }
+    .emoji-heading {
+      font-size: 1.8em;
+      margin-bottom: 15px;
+      display: inline-block;
+    }
+    .step {
+      margin: 15px 0;
+      padding: 10px;
+      background: #f9e79f;
+      border-radius: 10px;
+      transition: transform 0.3s;
+    }
+    .step:hover {
+      transform: scale(1.02);
+    }
+    .step ol, .step ul {
+      padding-left: 25px;
+    }
+    button {
+      background-color: #e74c3c;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: bold;
+    }
+    button:hover:not(:disabled) {
+      background-color: #c0392b;
+      transform: translateY(-2px);
+    }
+    button:disabled {
+      background: #bdc3c7;
+      cursor: not-allowed;
+    }
+    .quiz-form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      background: #d5f5e3;
+      padding: 15px;
+      border-radius: 10px;
+    }
+    .quiz-form label {
+      display: flex;
+      align-items: center;
+      padding: 10px;
+      border: 2px dashed #27ae60;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .quiz-form label:hover {
+      background-color: #e8f8f5;
+    }
+    .quiz-form input[type="radio"] {
+      margin-right: 15px;
+      transform: scale(1.5);
+    }
+    .feedback {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+    }
+    .feedback.correct {
+      background: #d5f5e3;
+      border: 2px solid #27ae60;
+      color: #27ae60;
+      animation: pop 0.5s ease;
+    }
+    .feedback.incorrect {
+      background: #f5e7e8;
+      border: 2px solid #e74c3c;
+      color: #e74c3c;
+      animation: shake 0.5s ease;
+    }
+    @keyframes pop {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+    .tlc-container {
+      position: relative;
+      width: 300px;
+      height: 400px;
+      border: 3px dashed #e74c3c;
+      background: linear-gradient(135deg, #fff, #f9e79f);
+      overflow: hidden;
+      border-radius: 15px;
+      box-shadow: 0 10px 25px rgba(231, 76, 60, 0.3);
+      margin: 20px auto;
+      animation: pulse 5s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+    .solvent-front {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      height: 0;
+      background: rgba(231, 76, 60, 0.3);
+      transition: height 6s ease-out;
+      z-index: 1;
+      border-top: 2px dashed #27ae60;
+    }
+    .baseline {
+      position: absolute;
+      bottom: 20px;
+      width: 100%;
+      height: 2px;
+      background: #e74c3c;
+      border-top: 2px dotted #27ae60;
+      z-index: 3;
+      cursor: pointer;
+    }
+    .solvent-front-line {
+      position: absolute;
+      bottom: 350px;
+      width: 100%;
+      height: 2px;
+      background: #3498db;
+      z-index: 3;
+      display: none;
+    }
+    .label {
+      position: absolute;
+      font-size: 14px;
+      color: #e74c3c;
+      left: 5px;
+      z-index: 4;
+      text-shadow: 1px 1px #ecf0f1;
+      animation: fadeIn 2s;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+    .baseline-label {
+      bottom: 10px;
+    }
+    .solvent-front-label {
+      bottom: 340px;
+      display: none;
+    }
+    .spot {
+      position: absolute;
+      width: 15px;
+      height: 15px;
+      border-radius: 50%;
+      z-index: 2;
+      opacity: 0;
+      animation: bounceIn 0.5s forwards;
+    }
+    @keyframes bounceIn {
+      0% { opacity: 0; transform: scale(0); }
+      50% { opacity: 0.5; transform: scale(1.2); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+    .compound-a { background: radial-gradient(circle, #9b59b6, #8e44ad); }
+    .compound-b { background: radial-gradient(circle, #3498db, #2980b9); }
+    .compound-c { background: radial-gradient(circle, #e74c3c, #c0392b); }
+    .chlorophyll-a { background: radial-gradient(circle, #2ecc71, #27ae60); }
+    .chlorophyll-b { background: radial-gradient(circle, #27ae60, #1a5c38); }
+    .xanthophyll { background: radial-gradient(circle, #f1c40f, #f39c12); }
+    .carotene { background: radial-gradient(circle, #e67e22, #d35400); }
+    .legend {
+      max-width: 300px;
+      margin: 20px auto;
+      font-size: 16px;
+      text-align: center;
+      background: #d5f5e3;
+      padding: 10px;
+      border-radius: 10px;
+    }
+    .legend ul {
+      list-style: none;
+      padding: 0;
+      display: flex;
+      justify-content: space-around;
+      flex-wrap: wrap;
+    }
+    .legend li {
+      margin-bottom: 5px;
+      font-weight: bold;
+      color: #2c3e50;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: #f9e79f;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+      animation: slideIn 1s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateY(20px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+    th, td {
+      padding: 12px 15px;
+      border: 2px solid #27ae60;
+      text-align: left;
+      background: #fff;
+    }
+    thead {
+      background-color: #e74c3c;
+      color: white;
+      font-size: 1.1em;
+    }
+    .rf-input {
+      width: 60px;
+      padding: 8px;
+      text-align: center;
+      border: 2px solid #e74c3c;
+      border-radius: 8px;
+      font-size: 1em;
+      transition: border-color 0.3s;
+    }
+    .rf-input:focus {
+      border-color: #27ae60;
+      outline: none;
+    }
+    .rf-feedback {
+      margin-top: 15px;
+      padding: 10px;
+      border-radius: 6px;
+      font-weight: bold;
+      animation: fadeIn 1s;
+    }
+    .rf-feedback.correct {
+      background: #d5f5e3;
+      border: 2px solid #27ae60;
+      color: #27ae60;
+    }
+    .rf-feedback.incorrect {
+      background: #f5e7e8;
+      border: 2px solid #e74c3c;
+      color: #e74c3c;
+    }
+    .solvent-selector {
+      margin: 20px 0;
+      padding: 15px;
+      background: #d5f5e3;
+      border-radius: 10px;
+      text-align: center;
+    }
+    .solvent-selector select {
+      padding: 8px;
+      border: 2px solid #e74c3c;
+      border-radius: 8px;
+      font-size: 1em;
+      margin-right: 10px;
+    }
+    @media (max-width: 600px) {
+      .tlc-container {
+        width: 90vw;
+        height: 60vh;
+      }
+    }
+    #google_translate_element {
+      margin-bottom: 20px;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <h1>Phytolab TLC Adventure - Explore the Magic of TLC!</h1>
+
+  <!-- Google Translate widget -->
+  <div id="google_translate_element"></div>
+
+  <div class="tab-buttons">
+    <button class="tab-button active" onclick="showTab('lesson')">TLC Basics</button>
+    <button class="tab-button" onclick="showTab('interactive')">Interactive TLC Fun</button>
+    <button class="tab-button" onclick="showTab('spinach')">Spinach Pigment Quest</button>
+  </div>
+
+  <!-- TLC Basics Tab -->
+  <div id="lesson-tab" class="tab-content">
+    <div class="section-wrapper">
+      <h2 class="emoji-heading">📘 TLC Basics: Your Magical TLC Journey Begins!</h2>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧙♂️ What is TLC, Young Alchemist?</h3>
+        <p>Welcome to the enchanted world of Thin Layer Chromatography (TLC)! TLC is like a magical race track where compounds compete to show their true colors. It helps us separate and identify different substances in a mixture by letting them travel up a special plate. Ready to learn the secrets?</p>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🏁 The TLC Race Track: How It Works!</h3>
+        <ul>
+          <li><strong>The Plate (Stationary Phase):</strong> A magical canvas (usually silica gel on a glass or plastic sheet) where the race happens!</li>
+          <li><strong>The Solvent (Mobile Phase):</strong> The enchanted liquid that carries the compounds up the plate!</li>
+          <li><strong>The Sample:</strong> The mixture of compounds you place at the starting line (baseline)!</li>
+          <li><strong>The Race:</strong> Compounds travel at different speeds based on their "stickiness" to the plate and their "friendship" with the solvent!</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🎨 Why Do Compounds Run Differently?</h3>
+        <p>Each compound has its own personality:</p>
+        <ul>
+          <li><strong>Polarity:</strong> Compounds that are more "sticky" (polar) cling to the plate and move slower.</li>
+          <li><strong>Solvent Magic:</strong> Compounds that love the solvent (less polar) zoom ahead faster!</li>
+        </ul>
+        <p>By the end of the race, you’ll see colorful spots showing where each compound stopped. That’s how we identify them!</p>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧠 Quick Quiz: Test Your TLC Wisdom!</h3>
+        <p>Which compound will travel the farthest on the TLC plate?</p>
+        <form id="tlc-quiz-form" class="quiz-form" aria-describedby="tlc-quiz-feedback">
+          <label><input type="radio" name="tlc-quiz" value="Polar" /> A super sticky (polar) compound</label>
+          <label><input type="radio" name="tlc-quiz" value="Non-polar" /> A speedy (non-polar) compound</label>
+          <label><input type="radio" name="tlc-quiz" value="Same" /> They’ll all travel the same distance</label>
+          <button type="button" onclick="checkTLCQuiz()">▶️ Submit Your Guess!</button>
+        </form>
+        <p id="tlc-quiz-feedback" class="feedback" role="alert" aria-live="assertive"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Interactive TLC Fun Tab -->
+  <div id="interactive-tab" class="tab-content hidden">
+    <div class="section-wrapper">
+      <h2 class="emoji-heading">🎮 Interactive TLC Fun: Be a TLC Wizard!</h2>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧪 Step 1: Spot Your Magical Mixture!</h3>
+        <p>Click on the starting line (baseline) below to place your mysterious mixture. You can also add reference compounds to compare. Let’s get spotting!</p>
+        <div class="tlc-container" role="region" aria-label="TLC plate for interactive simulation">
+          <div class="baseline" id="baselineInteractive" onclick="spotSample(event)" aria-label="Click to spot sample on the baseline">
+            <div class="label baseline-label">Starting Line!</div>
+          </div>
+          <div class="solvent-front" id="solventFrontInteractive"></div>
+          <div class="solvent-front-line" id="solventFrontLineInteractive" aria-hidden="true"></div>
+          <div class="label solvent-front-label" id="solventFrontLabelInteractive" aria-label="Solvent front maximum distance">Finish Line!</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧙♀️ Step 2: Choose Your Magic Solvent!</h3>
+        <div class="solvent-selector">
+          <label for="solvent-select">Pick your solvent to start the race:</label>
+          <select id="solvent-select">
+            <option value="hexane-acetone">Hexane:Acetone (9:1) - Non-polar Magic</option>
+            <option value="ethyl-acetate">Ethyl Acetate:Hexane (3:7) - Balanced Spell</option>
+            <option value="methanol-water">Methanol:Water (1:1) - Polar Potion</option>
+          </select>
+          <button onclick="runInteractiveTLC()">▶️ Start the Race!</button>
+        </div>
+        <div class="legend">
+          <strong>Legend of the Compounds:</strong>
+          <ul>
+            <li><span style="color: #8e44ad;">●</span> Compound A - The Purple Mystic</li>
+            <li><span style="color: #2980b9;">●</span> Compound B - The Blue Voyager</li>
+            <li><span style="color: #c0392b;">●</span> Compound C - The Red Sprinter</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">📏 Step 3: Calculate Rf Power Scores!</h3>
+        <p>After the race, measure how far each compound traveled and calculate their Rf scores! Use the formula: Rf = Distance traveled by compound / Distance traveled by solvent front (35 cm).</p>
+        <table id="rf-table-interactive">
+          <thead>
+            <tr><th>Compound</th><th>Distance Traveled (cm)</th><th>Your Rf Score</th><th>Check Your Magic!</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Compound A</td><td id="distance-a">-</td><td><input class="rf-input" id="rf-a" type="text" placeholder="" aria-label="Rf for Compound A"></td><td><button onclick="checkRfInteractive('a', 0)">[Check]</button></td>
+            </tr>
+            <tr>
+              <td>Compound B</td><td id="distance-b">-</td><td><input class="rf-input" id="rf-b" type="text" placeholder="" aria-label="Rf for Compound B"></td><td><button onclick="checkRfInteractive('b', 0)">[Check]</button></td>
+            </tr>
+            <tr>
+              <td>Compound C</td><td id="distance-c">-</td><td><input class="rf-input" id="rf-c" type="text" placeholder="" aria-label="Rf for Compound C"></td><td><button onclick="checkRfInteractive('c', 0)">[Check]</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p id="rf-feedback-interactive" class="rf-feedback" role="alert" aria-live="assertive"></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Spinach Pigments Simulation -->
+  <div id="spinach-tab" class="tab-content hidden">
+    <div class="section-wrapper">
+      <h2 class="emoji-heading">🌿 TLC Adventure: Unlocking Spinach Pigment Secrets!</h2>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧪 The Grand Pigment Discovery Mission</h3>
+        <p>Embark on an epic journey to extract dazzling natural pigments from spinach leaves and separate them with the magical power of Thin Layer Chromatography (TLC)! Meet your pigment crew:</p>
+        <ul>
+          <li><strong>Chlorophyll a</strong> - The bold green leader!</li>
+          <li><strong>Chlorophyll b</strong> - The wise green sidekick!</li>
+          <li><strong>Xanthophylls</strong> - The sunny yellow adventurers!</li>
+          <li><strong>Carotenes</strong> - The vibrant orange explorers!</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧫 Your Magical Science Toolkit</h3>
+        <ul>
+          <li>Fresh spinach leaves - Nature’s treasure chest!</li>
+          <li>Mortar and pestle - The grinding wizards!</li>
+          <li>1:1 acetone and ethanol mix - The pigment-releasing potion!</li>
+          <li>Filter paper or funnel - The purifier’s charm!</li>
+          <li>Capillary tubes - The precision wands!</li>
+          <li>TLC plate (silica gel) - The enchanted canvas!</li>
+          <li>Solvent system: Petroleum Ether:Acetone (9:1) - The magic flow!</li>
+          <li>Visualizing agents: Iodine, Potassium Permanganate, UV lamp - The reveal spells!</li>
+          <li>Ruler - The measurement oracle!</li>
+        </ul>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧬 Part 1: Pigment Extraction Quest</h3>
+        <ol>
+          <li class="step-item">
+            <strong>Step 1: Grind and Extract - Unleash the Colors!</strong>
+            <ul>
+              <li>Toss fresh spinach leaves into your mortar.</li>
+              <li>Splash in a dash of the 1:1 acetone:ethanol potion.</li>
+              <li>Grind like a pro to free the hidden pigments!</li>
+            </ul>
+          </li>
+          <li class="step-item">
+            <strong>Step 2: Filter the Extract - Clear the Magic!</strong>
+            <ul>
+              <li>Use your filter paper or funnel to conjure a sparkling green potion!</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧪 Part 2: TLC Setup Challenge</h3>
+        <ol>
+          <li class="step-item">
+            <strong>Step 3: Spotting the TLC Plate - Paint Your Canvas!</strong>
+            <ul>
+              <li>Grab a capillary tube and dab a tiny drop of spinach magic 1 cm above the TLC plate’s base.</li>
+              <li>Let it dry, then repeat for a bolder spot if you dare!</li>
+            </ul>
+          </li>
+          <li class="step-item">
+            <strong>Step 4: Develop the TLC Plate - Watch the Magic Rise!</strong>
+            <ul>
+              <li>Place your TLC plate in the developing chamber with the Petroleum Ether:Acetone (9:1) flow.</li>
+              <li>Let the solvent climb until it’s ~1 cm from the top - hold your breath!</li>
+              <li>Pull it out and mark the solvent front with a victory line!</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🧠 Part 3: Interactive Pigment Prediction Game</h3>
+        <ol>
+          <li class="step-item">
+            <strong>Step 1 of 5 – Make Your Epic Prediction!</strong>
+            <p>Before the magic unfolds, guess which pigment will zoom the farthest on the TLC plate! Choose wisely:</p>
+            <form id="quiz-form" class="quiz-form" aria-describedby="quiz-feedback">
+              <label><input type="radio" name="pigment" value="Chlorophyll a" /> Chlorophyll a - The Green Champion!</label>
+              <label><input type="radio" name="pigment" value="Chlorophyll b" /> Chlorophyll b - The Green Sage!</label>
+              <label><input type="radio" name="pigment" value="Xanthophyll" /> Xanthophyll - The Yellow Trailblazer!</label>
+              <label><input type="radio" name="pigment" value="Carotene" /> Carotene - The Orange Speedster!</label>
+              <button type="button" onclick="checkPrediction()">▶️ Submit Your Guess!</button>
+              <button type="button" onclick="nextStep()" id="nextBtn" disabled>▶️ Next Adventure!</button>
+            </form>
+            <p id="quiz-feedback" class="feedback" role="alert" aria-live="assertive"></p>
+          </li>
+          <li class="step-item">
+            <strong>Step 2–5 – Visualization and Measurement Magic!</strong>
+            <p>Launch the simulation to:</p>
+            <ul>
+              <li>Watch the pigment bands dance into view!</li>
+              <li>Spot your pigment heroes by their colors and glow!</li>
+              <li>Measure distances and calculate their Rf power scores!</li>
+            </ul>
+            <button onclick="startTLC()">✨ Start the Magic Show!</button>
+            <div class="tlc-container" role="region" aria-label="TLC plate with baseline and solvent front">
+              <div class="baseline" aria-hidden="true"></div>
+              <div class="solvent-front-line" id="solventFrontLine" aria-hidden="true"></div>
+              <div class="label baseline-label" aria-label="Baseline where sample is applied">Starting Line!</div>
+              <div class="label solvent-front-label" id="solventFrontLabel" aria-label="Solvent front maximum distance">Finish Line!</div>
+              <div class="solvent-front" id="solventFront"></div>
+              <div class="spot chlorophyll-a" id="spot1" style="bottom: 20px;"></div>
+              <div class="spot chlorophyll-b" id="spot2" style="bottom: 20px;"></div>
+              <div class="spot xanthophyll" id="spot3" style="bottom: 20px;"></div>
+              <div class="spot carotene" id="spot4" style="bottom: 20px;"></div>
+            </div>
+            <div class="legend">
+              <strong>Legend of the Pigments:</strong>
+              <ul>
+                <li><span style="color: #d35400;">●</span> Carotene - The Orange Speedster (least polar)</li>
+                <li><span style="color: #f39c12;">●</span> Xanthophyll - The Yellow Trailblazer</li>
+                <li><span style="color: #1a5c38;">●</span> Chlorophyll b - The Green Sage</li>
+                <li><span style="color: #2ecc71;">●</span> Chlorophyll a - The Green Champion (most polar)</li>
+              </ul>
+            </div>
+          </li>
+        </ol>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">🔬 Part 4: Pigment Reveal Show!</h3>
+        <p><strong>Magical Visualization Tricks:</strong></p>
+        <table>
+          <thead>
+            <tr><th>Visualizing Spell</th><th>Magic Reaction with Pigments</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Iodine vapor</td><td>Brown spots pop for unsaturated pigments!</td></tr>
+            <tr><td>Potassium Permanganate</td><td>Yellow-brown spots on a purple surprise!</td></tr>
+            <tr><td>Vanillin spray</td><td>Colored spots (brown, red) for chlorophylls!</td></tr>
+            <tr><td>UV light (365 nm)</td><td>Green glow (chlorophylls), orange sparkle (carotenoids)!</td></tr>
+            <tr><td>Ninhydrin</td><td>Weak/No color (not great for spinach magic)!</td></tr>
+            <tr><td>Dragendorff reagent</td><td>No action (for alkaloids only)!</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">📏 Part 5: Calculate Rf Power Scores!</h3>
+        <p>Measure the distance from the origin to each spot’s center (in cm).</p>
+        <p>Measure the distance from the origin to the solvent front (in cm).</p>
+        <p>Use the epic formula:</p>
+        <p>Rf = Distance traveled by pigment / Distance traveled by solvent front</p>
+
+        <div class="emoji-heading">💡 Interactive Rf Power Challenge!</div>
+        <table>
+          <thead>
+            <tr><th>Pigment Hero</th><th>Distance Solvent Front (cm)</th><th>Distance Pigment Spot (cm)</th><th>Your Rf Power Score</th><th>Check Your Magic!</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Carotenoids</td><td>8.0</td><td>7.6</td><td><input class="rf-input" id="rf-carotenoids" type="text" placeholder="" aria-label="Rf for Carotenoids"></td><td><button onclick="checkRf('carotenoids', 7.6, 8.0)">[Check]</button></td>
+            </tr>
+            <tr>
+              <td>Chlorophyll a</td><td>8.0</td><td>5.2</td><td><input class="rf-input" id="rf-chla" type="text" placeholder="" aria-label="Rf for Chlorophyll a"></td><td><button onclick="checkRf('chla', 5.2, 8.0)">[Check]</button></td>
+            </tr>
+            <tr>
+              <td>Chlorophyll b</td><td>8.0</td><td>3.6</td><td><input class="rf-input" id="rf-chlb" type="text" placeholder="" aria-label="Rf for Chlorophyll b"></td><td><button onclick="checkRf('chlb', 3.6, 8.0)">[Check]</button></td>
+            </tr>
+          </tbody>
+        </table>
+        <p id="rf-feedback" class="rf-feedback" role="alert" aria-live="assertive"></p>
+
+        <p class="emoji-heading">✅ Compare Your Scores with the Masters’ Guide Below!</p>
+        <p><strong>Typical Rf Power Scores (Silica gel, 70:30 hexane:acetone):</strong></p>
+        <table>
+          <thead>
+            <tr><th>Pigment Hero</th><th>Color</th><th>Approx. Rf</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Carotenoids</td><td>Orange</td><td>~0.95</td></tr>
+            <tr><td>Chlorophyll a</td><td>Blue-green</td><td>~0.65</td></tr>
+            <tr><td>Chlorophyll b</td><td>Yellow-green</td><td>~0.45</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="step">
+        <h3 class="emoji-heading">📚 Wisdom Scrolls</h3>
+        <ul>
+          <li>Pavia, D. L., Lampman, G. M., Kriz, G. S., & Vyvyan, J. R. (2008). <i>Introduction to Organic Laboratory Techniques: A Small Scale Approach</i>. Cengage Learning.</li>
+          <li>Skoog, D. A., Holler, F. J., & Crouch, S. R. (2017). <i>Principles of Instrumental Analysis</i>. Cengage Learning.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Tab navigation
+    function showTab(tabName) {
+      const tabs = document.getElementsByClassName('tab-content');
+      const buttons = document.getElementsByClassName('tab-button');
+      for (let i = 0; i < tabs.length; i++) {
+        tabs[i].classList.add('hidden');
+        buttons[i].classList.remove('active');
+      }
+      document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+      document.querySelector(`.tab-button[onclick="showTab('${tabName}')"]`).classList.add('active');
+    }
+
+    // TLC Basics Quiz
+    function checkTLCQuiz() {
+      const selected = document.querySelector('input[name="tlc-quiz"]:checked');
+      const feedback = document.getElementById('tlc-quiz-feedback');
+      if (!selected) {
+        feedback.textContent = 'Choose an answer, brave learner!';
+        feedback.classList.remove('correct', 'incorrect');
+        return;
+      }
+      const correct = 'Non-polar';
+      feedback.textContent = selected.value === correct
+        ? 'Amazing! Non-polar compounds travel the farthest because they’re less sticky to the plate!'
+        : 'Not quite! Non-polar compounds travel farther since they don’t stick much to the plate. Keep learning!';
+      feedback.classList.add(selected.value === correct ? 'correct' : 'incorrect');
+    }
+
+    // Interactive TLC Fun - Spotting
+    let spotCount = 0;
+    function spotSample(event) {
+      if (spotCount >= 3) return; // Limit to 3 spots
+      const baseline = document.getElementById('baselineInteractive');
+      const rect = baseline.getBoundingClientRect();
+      const x = event.clientX - rect.left - 7.5; // Adjust for spot width
+      const spot = document.createElement('div');
+      spot.className = `spot compound-${String.fromCharCode(97 + spotCount)}`;
+      spot.style.left = `${x}px`;
+      spot.style.bottom = '20px';
+      baseline.parentNode.appendChild(spot);
+      spotCount++;
+    }
+
+    // Interactive TLC Fun - Run Simulation
+    function runInteractiveTLC() {
+      const solvent = document.getElementById('solventFrontInteractive');
+      const solventFrontLine = document.getElementById('solventFrontLineInteractive');
+      const solventFrontLabel = document.getElementById('solventFrontLabelInteractive');
+      const solventSelect = document.getElementById('solvent-select').value;
+      const spots = document.querySelectorAll('#interactive-tab .spot');
+
+      if (spots.length === 0) {
+        alert('Spot at least one compound on the Starting Line first!');
+        return;
+      }
+
+      const distances = {
+        'hexane-acetone': [30, 25, 20], // Non-polar solvent: less polar travels farther
+        'ethyl-acetate': [25, 22, 18],  // Balanced solvent
+        'methanol-water': [20, 18, 15]  // Polar solvent: more polar travels farther
+      };
+
+      solvent.style.height = '0';
+      solventFrontLine.style.display = 'none';
+      solventFrontLabel.style.display = 'none';
+
+      solvent.style.height = '350px';
+
+      setTimeout(() => {
+        solventFrontLine.style.display = 'block';
+        solventFrontLabel.style.display = 'block';
+      }, 6000);
+
+      spots.forEach((spot, i) => {
+        const finalDistance = distances[solventSelect][i] * 10; // Scale to px
+        setTimeout(() => {
+          spot.style.opacity = 1;
+          spot.style.transition = 'bottom 5s ease-out, opacity 1s ease-in';
+          spot.style.bottom = `${finalDistance}px`;
+          const distanceCm = finalDistance / 10;
+          document.getElementById(`distance-${String.fromCharCode(97 + i)}`).textContent = distanceCm.toFixed(1);
+          document.querySelector(`#rf-table-interactive button[onclick*="checkRfInteractive('${String.fromCharCode(97 + i)}', 0)"]`).setAttribute('onclick', `checkRfInteractive('${String.fromCharCode(97 + i)}', ${distanceCm})`);
+        }, 1000 + i * 500);
+      });
+    }
+
+    // Interactive TLC Fun - Rf Calculation
+    function checkRfInteractive(compound, distance) {
+      const input = document.getElementById(`rf-${compound}`).value;
+      const feedback = document.getElementById('rf-feedback-interactive');
+      const solventFrontDistance = 35; // 350px = 35cm
+      const calculatedRf = distance / solventFrontDistance;
+      const userRf = parseFloat(input);
+
+      if (isNaN(userRf)) {
+        feedback.textContent = 'Enter a number, young wizard!';
+        feedback.classList.remove('correct', 'incorrect');
+        return;
+      }
+
+      const margin = 0.05;
+      const isCorrect = Math.abs(userRf - calculatedRf) <= margin;
+
+      feedback.textContent = isCorrect
+        ? `Fantastic! Compound ${compound.toUpperCase()} scores ${calculatedRf.toFixed(2)} Rf power!`
+        : `Oops! The true Rf is ${calculatedRf.toFixed(2)}. Use Rf = Distance compound / Distance solvent front. Try again!`;
+      feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+
+    // Spinach Pigment Prediction
+    function checkPrediction() {
+      const selected = document.querySelector('input[name="pigment"]:checked');
+      const feedback = document.getElementById('quiz-feedback');
+      const nextBtn = document.getElementById('nextBtn');
+      if (!selected) {
+        feedback.textContent = 'Pick a pigment, brave explorer!';
+        feedback.classList.remove('correct', 'incorrect');
+        return;
+      }
+      const correct = 'Carotene';
+      feedback.textContent = selected.value === correct
+        ? 'Victory! Carotene, the Orange Speedster, wins with its low polarity!'
+        : 'Oh no! The Orange Speedster (Carotene) is the farthest traveler due to low polarity. Try again!';
+      feedback.classList.add(selected.value === correct ? 'correct' : 'incorrect');
+      nextBtn.disabled = false;
+    }
+
+    // Spinach Pigment Next Step
+    function nextStep() {
+      alert('Onward to the next epic chapter!');
+    }
+
+    // Spinach Pigment TLC Simulation
+    function startTLC() {
+      const solvent = document.getElementById("solventFront");
+      const solventFrontLine = document.getElementById("solventFrontLine");
+      const solventFrontLabel = document.getElementById("solventFrontLabel");
+      const spots = [
+        { el: document.getElementById("spot1"), final: 350 }, // Chlorophyll a
+        { el: document.getElementById("spot2"), final: 300 }, // Chlorophyll b
+        { el: document.getElementById("spot3"), final: 250 }, // Xanthophyll
+        { el: document.getElementById("spot4"), final: 180 }  // Carotene
+      ];
+
+      spots.forEach(spot => {
+        spot.el.style.bottom = '20px';
+        spot.el.style.opacity = 0;
+      });
+      solvent.style.height = '0';
+      solventFrontLine.style.display = 'none';
+      solventFrontLabel.style.display = 'none';
+
+      solvent.style.height = '350px';
+
+      setTimeout(() => {
+        solventFrontLine.style.display = 'block';
+        solventFrontLabel.style.display = 'block';
+      }, 6000);
+
+      spots.forEach((spot, i) => {
+        setTimeout(() => {
+          spot.el.style.opacity = 1;
+          spot.el.style.transition = 'bottom 5s ease-out, opacity 1s ease-in';
+          spot.el.style.bottom = spot.final + 'px';
+        }, 1000 + i * 500);
+      });
+    }
+
+    // Spinach Pigment Rf Calculation
+    function checkRf(pigment, distanceSpot, distanceFront) {
+      const input = document.getElementById(`rf-${pigment}`).value;
+      const feedback = document.getElementById('rf-feedback');
+      const calculatedRf = distanceSpot / distanceFront;
+      const userRf = parseFloat(input);
+
+      if (isNaN(userRf)) {
+        feedback.textContent = 'Enter a number, young alchemist!';
+        feedback.classList.remove('correct', 'incorrect');
+        return;
+      }
+
+      const margin = 0.05;
+      const isCorrect = Math.abs(userRf - calculatedRf) <= margin;
+
+      feedback.textContent = isCorrect
+        ? `Well done! ${pigment === 'chla' ? 'Chlorophyll a' : pigment === 'chlb' ? 'Chlorophyll b' : 'Carotenoids'} scores ${calculatedRf.toFixed(2)} Rf power!`
+        : `Oops! The true Rf is ${calculatedRf.toFixed(2)}. Use Rf = Distance pigment / Distance solvent front. Try again!`;
+      feedback.classList.add(isCorrect ? 'correct' : 'incorrect');
+    }
+
+    // Initialize Google Translate
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({
+        pageLanguage: 'en',
+        includedLanguages: 'id,en',
+        layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+      }, 'google_translate_element');
+    }
+
+    // Initialize
+    showTab('lesson');
+  </script>
+  <script src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>

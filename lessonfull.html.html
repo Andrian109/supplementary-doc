@@ -1,0 +1,1199 @@
+﻿import React, { useState, useEffect } from 'react';
+
+// Modal Component for Image Display
+const ImageModal = ({ src, alt, onClose }) => {
+    if (!src) return null;
+
+    return (
+        <div
+            className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4 animate-fade-in"
+            onClick={onClose}
+        >
+            <div
+                className="relative bg-white p-4 rounded-lg shadow-xl max-w-3xl max-h-full overflow-auto animate-scale-in"
+                onClick={e => e.stopPropagation()} // Prevent modal close when clicking on image
+            >
+                <button
+                    onClick={onClose}
+                    className="absolute top-2 right-2 text-gray-800 hover:text-gray-600 text-3xl font-bold p-2 rounded-full bg-gray-200 hover:bg-gray-300 transition-colors duration-200"
+                    aria-label="Close"
+                >
+                    &times;
+                </button>
+                <img src={src} alt={alt} className="max-w-full h-auto rounded-md" />
+                {alt && <p className="text-center text-sm text-gray-600 mt-2">{alt}</p>}
+            </div>
+        </div>
+    );
+};
+
+// Lesson Content Component
+const LessonContent = ({ lesson }) => {
+    const [currentQuizAnswers, setCurrentQuizAnswers] = useState({});
+    const [quizFeedback, setQuizFeedback] = useState({});
+    const [showModal, setShowModal] = useState(false);
+    const [modalImageSrc, setModalImageSrc] = useState('');
+    const [modalImageAlt, setModalImageAlt] = useState('');
+
+    useEffect(() => {
+        // Reset quiz state when lesson changes
+        setCurrentQuizAnswers({});
+        setQuizFeedback({});
+    }, [lesson]);
+
+    if (!lesson) {
+        return <div className="text-center text-gray-600 py-10">Please select a lesson from the navigation.</div>;
+    }
+
+    const handleQuizAnswer = (questionIndex, selectedOption, correctAnswer) => {
+        setCurrentQuizAnswers(prev => ({ ...prev, [questionIndex]: selectedOption }));
+        setQuizFeedback(prev => ({
+            ...prev,
+            [questionIndex]: selectedOption === correctAnswer ? 'correct' : 'incorrect'
+        }));
+    };
+
+    const openImageModal = (src, alt) => {
+        setModalImageSrc(src);
+        setModalImageAlt(alt);
+        setShowModal(true);
+    };
+
+    const closeImageModal = () => {
+        setShowModal(false);
+        setModalImageSrc('');
+        setModalImageAlt('');
+    };
+
+    return (
+        <div className="p-6 bg-white rounded-lg shadow-xl animate-fade-in-up">
+            <h2 className="text-3xl sm:text-4xl font-extrabold text-teal-800 mb-4 border-b-2 border-teal-200 pb-2">
+                {lesson.title}
+            </h2>
+
+            <h3 className="text-2xl font-semibold text-gray-700 mb-3">II. Learning Objectives</h3>
+            <ul className="list-disc list-inside space-y-2 text-gray-700 mb-6 pl-4">
+                {lesson.objectives.map((objective, index) => (
+                    <li key={index} className="opacity-0 animate-slide-in" style={{ animationDelay: `${index * 0.1}s` }}>
+                        {objective}
+                    </li>
+                ))}
+            </ul>
+
+            <h3 className="text-2xl font-semibold text-gray-700 mb-3">III. Lesson Outline</h3>
+            {lesson.outline.map((section, index) => (
+                <div key={index} className="mb-8 opacity-0 animate-fade-in-up" style={{ animationDelay: `${(lesson.objectives.length * 0.1) + (index * 0.15)}s` }}>
+                    <h4 className="text-xl font-bold text-teal-700 mb-3 border-l-4 border-teal-400 pl-3">
+                        {`${index + 1}. ${section.heading}`}
+                    </h4>
+                    {section.type === 'quiz' ? (
+                        <div className="bg-teal-50 p-4 rounded-lg shadow-inner">
+                            <h5 className="text-xl font-semibold text-teal-800 mb-4">Check Your Understanding!</h5>
+                            {section.questions.map((q, qIndex) => (
+                                <div key={qIndex} className="mb-6 p-4 bg-white rounded-md shadow-sm">
+                                    <p className="font-medium text-gray-800 mb-3">{`${qIndex + 1}. ${q.question}`}</p>
+                                    <div className="space-y-2">
+                                        {q.options.map((option, oIndex) => (
+                                            <label key={oIndex} className="flex items-center cursor-pointer">
+                                                <input
+                                                    type="radio"
+                                                    name={`question-${qIndex}`}
+                                                    value={option}
+                                                    checked={currentQuizAnswers[qIndex] === option}
+                                                    onChange={() => handleQuizAnswer(qIndex, option, q.correctAnswer)}
+                                                    className="form-radio text-teal-600 h-4 w-4 transition-transform duration-200 transform hover:scale-110"
+                                                    disabled={quizFeedback[qIndex] !== undefined}
+                                                />
+                                                <span className={`ml-2 text-gray-700 ${currentQuizAnswers[qIndex] === option ? 'font-semibold' : ''}`}>
+                                                    {option}
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                    {quizFeedback[qIndex] && (
+                                        <div className={`mt-3 p-2 rounded-md text-sm font-semibold ${quizFeedback[qIndex] === 'correct' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                                            {quizFeedback[qIndex] === 'correct' ? 'Correct!' : `Incorrect. The correct answer was: ${q.correctAnswer}`}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    ) : (
+                        <div
+                            className="prose prose-sm sm:prose lg:prose-lg xl:prose-xl max-w-none text-gray-700 leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: section.content }}
+                            onClick={(e) => {
+                                if (e.target.tagName === 'IMG') {
+                                    openImageModal(e.target.src, e.target.alt);
+                                }
+                            }}
+                        ></div>
+                    )}
+                </div>
+            ))}
+            <ImageModal src={modalImageSrc} alt={modalImageAlt} onClose={closeImageModal} />
+        </div>
+    );
+};
+
+// Main App component
+const App = () => {
+    const [selectedLesson, setSelectedLesson] = useState('Lesson 1');
+
+    // Data for the lessons, extracted from the provided document
+    const lessons = {
+        'Lesson 1': {
+            title: 'Introduction to Phytochemistry',
+            objectives: [
+                'Explain what phytochemistry is and why it is important.',
+                'Identify the main types of plant metabolites and their roles.',
+                'Give examples of useful medicines and products that come from plants.',
+                'Describe the basic steps to extract and study plant compounds.',
+                'Name common tools used in phytochemical analysis.',
+                'Understand how phytochemistry connects with other sciences.',
+                'Discuss how phytochemistry is used in health, food, and the environment.'
+            ],
+            outline: [
+                {
+                    heading: 'What is Phytochemistry?',
+                    content: `
+                        <p><strong>Etymology:</strong> Phyto- = plant, Chemistry = study of chemicals</p>
+                        <p><strong>Definition:</strong> Phytochemistry is the scientific study of chemical compounds produced by plants, particularly secondary metabolites, which often exhibit biological activity and pharmaceutical potential. Those secondary metabolites are synthesized as a measure for self-defense against insects, pests, pathogens, herbivores, ultraviolet exposure and environmental hazards. It takes into account their structural compositions, the biosynthetic pathways, functions, and mechanisms of actions in the living system.</p>
+                    `
+                },
+                {
+                    heading: 'Scope of Phytochemistry:',
+                    content: `
+                        <ul>
+                            <li><strong>Biosynthesis:</strong> Understanding metabolic pathways of secondary metabolite formation.</li>
+                            <li><strong>Extraction & Isolation:</strong> Obtaining pure compounds from plant matrices.</li>
+                            <li><strong>Purification:</strong> Separation and concentration of specific bioactive compounds.</li>
+                            <li><strong>Identification & Structural Elucidation:</strong> Using analytical chemistry to determine compound structures.</li>
+                            <li><strong>Applications:</strong> Pharmaceutical development, nutraceuticals, functional foods, cosmetics, agriculture, and environmental sciences.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Interdisciplinary Integration:',
+                    content: `
+                        <ul>
+                            <li>Botany</li>
+                            <li>Pharmacology</li>
+                            <li>Biochemistry</li>
+                            <li>Organic Chemistry</li>
+                            <li>Molecular Biology</li>
+                            <li>Toxicology</li>
+                            <li>Ecology</li>
+                            <li>Medicine</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Why Do Plants Produce Secondary Metabolites?',
+                    content: `
+                        <p>Plants produce two major types of metabolites:</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Biological Role</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Examples</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Primary Metabolites</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Essential for plant growth, energy, and reproduction</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sugars, amino acids, nucleic acids, lipids</td>
+                                </tr>
+                                <tr>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Secondary Metabolites</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Adaptation, defense, ecological interactions</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, terpenoids, flavonoids, tannins, saponins, steroids</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Historical and Scientific Significance of Phytochemistry',
+                    content: `
+                        <p><strong>Historical Perspectives:</strong></p>
+                        <ul>
+                            <li>Early societies used plant medicines in traditional systems (Ayurveda, Jamu, Traditional Chinese Medicine, Malagasy medicine).</li>
+                            <li>Many important drugs originated from ethnopharmacological knowledge.</li>
+                        </ul>
+                        <p><strong>Scientific Contributions:</strong></p>
+                        <ul>
+                            <li>Isolation and structural elucidation of bioactive plant constituents.</li>
+                            <li>Development of modern pharmaceuticals inspired by plant compounds.</li>
+                            <li>Discovery of new molecular scaffolds for drug development.</li>
+                        </ul>
+                        <p><strong>Examples of Drugs Derived from Phytochemistry:</strong></p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Plant Source</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Active Compound</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Therapeutic Use</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Artemisia annua</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Artemisinin</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Antimalarial</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Taxus brevifolia</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Paclitaxel (Taxol)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Anticancer</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Papaver somniferum</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Morphine</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Analgesic</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Cinchona spp.</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Quinine</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Antimalarial</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Digitalis spp.</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Digoxin</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Cardiotonic</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Salix alba</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Salicin (Aspirin precursor)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Anti-inflammatory</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Contemporary Applications:</strong></p>
+                        <ul>
+                            <li><strong>Medical:</strong> New therapeutic agents.</li>
+                            <li><strong>Industrial:</strong> Nutraceuticals, cosmetics, functional foods, agrochemicals.</li>
+                            <li><strong>Ecological:</strong> Understanding plant-environment co-evolution.</li>
+                            <li><strong>Example:</strong> <em>Gynura procumbens</em> in Southeast Asia for diabetes.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'The Importance of Phytochemistry in Modern Research',
+                    content: `
+                        <ul>
+                            <li><strong>Ethnopharmacology:</strong> Studying indigenous medicine for drug leads.</li>
+                            <li><strong>Pharmacognosy:</strong> Scientific study of natural medicines.</li>
+                            <li><strong>Drug Discovery:</strong> Bioprospecting and lead compound identification.</li>
+                            <li><strong>Chemotaxonomy:</strong> Using chemical markers for plant classification.</li>
+                            <li><strong>Nutraceutical Science:</strong> Functional foods with health benefits.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Modern Analytical Tools in Phytochemistry',
+                    content: `
+                        <p><strong>Extraction Techniques:</strong></p>
+                        <ul>
+                            <li><strong>Maceration:</strong> Soaking plant material in solvent.</li>
+                            <li><strong>Soxhlet:</strong> Continuous hot solvent extraction.</li>
+                            <li><strong>Ultrasound/Microwave-Assisted:</strong> Faster methods using sound or heat.</li>
+                            <li><strong>Supercritical Fluid:</strong> Eco-friendly extraction with CO₂.</li>
+                        </ul>
+                        <p><strong>Isolation & Purification:</strong></p>
+                        <ul>
+                            <li><strong>Thin Layer Chromatography (TLC):</strong> Simple separation on plates.</li>
+                            <li><strong>High-Performance Liquid Chromatography (HPLC):</strong> Precise separation.</li>
+                            <li><strong>Gas Chromatography (GC):</strong> For volatile compounds.</li>
+                            <li><strong>Liquid Chromatography-Mass Spectrometry (LC-MS):</strong> Combines separation and identification.</li>
+                        </ul>
+                        <p><strong>Structure Elucidation:</strong></p>
+                        <ul>
+                            <li><strong>Nuclear Magnetic Resonance (NMR):</strong> Maps molecular structure.</li>
+                            <li><strong>Mass Spectrometry (MS):</strong> Measures molecular weight.</li>
+                            <li><strong>UV-Vis/Infrared Spectroscopy:</strong> Detects functional groups.</li>
+                            <li><strong>X-ray Crystallography:</strong> Visualizes 3D structures.</li>
+                        </ul>
+                        <p><strong>Bioassays:</strong></p>
+                        <ul>
+                            <li><em>In vitro</em> pharmacological screening (cytotoxicity, antioxidant, anti-inflammatory, antimicrobial assays)</li>
+                            <li><em>In vivo</em> studies (animal models)</li>
+                        </ul>
+                        <p><strong>Emerging Techniques:</strong></p>
+                        <ul>
+                            <li><strong>Metabolomics:</strong> Analyzes all plant chemicals.</li>
+                            <li><strong>Molecular Docking:</strong> Predicts drug interactions via computer.</li>
+                            <li><strong>Genomics:</strong> Maps genes for biosynthesis.</li>
+                            <li><strong>AI:</strong> Speeds up drug discovery.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Phytochemistry and Its Relationship to Other Disciplines',
+                    content: `
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discipline</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Connection</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Pharmacology</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Evaluates bioactivity and drug action</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Medicinal Chemistry</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Structure-activity optimization</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Toxicology</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Evaluates safety and toxic profiles</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Botany</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Plant classification and biodiversity</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Biochemistry</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Biosynthetic pathways of metabolites</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Genomics</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Discovery of biosynthetic gene clusters</td></tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Real-World Applications of Phytochemistry',
+                    content: `
+                        <ul>
+                            <li>Development of modern drugs for infectious diseases, cancer, and inflammation.</li>
+                            <li>Functional foods and dietary supplements.</li>
+                            <li>Natural pesticides and eco-friendly agricultural solutions.</li>
+                            <li>Skincare, cosmetics, and anti-aging products.</li>
+                            <li>Conservation of biodiversity through sustainable bioprospecting.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Check Your Understanding',
+                    type: 'quiz',
+                    questions: [
+                        {
+                            question: 'What is the primary focus of Phytochemistry?',
+                            options: [
+                                'The study of plant growth and reproduction.',
+                                'The scientific study of chemical compounds produced by plants, especially secondary metabolites.',
+                                'The analysis of soil composition for plant cultivation.',
+                                'The engineering of new plant species.'
+                            ],
+                            correctAnswer: 'The scientific study of chemical compounds produced by plants, especially secondary metabolites.'
+                        },
+                        {
+                            question: 'Which of the following is NOT considered a primary metabolite?',
+                            options: [
+                                'Sugars',
+                                'Amino acids',
+                                'Alkaloids',
+                                'Lipids'
+                            ],
+                            correctAnswer: 'Alkaloids'
+                        },
+                        {
+                            question: 'Phytochemistry is an interdisciplinary field that connects with which of the following sciences?',
+                            options: [
+                                'Only Botany and Pharmacology',
+                                'Only Biochemistry and Organic Chemistry',
+                                'Botany, Pharmacology, Biochemistry, Organic Chemistry, and more',
+                                'Only Medicine and Toxicology'
+                            ],
+                            correctAnswer: 'Botany, Pharmacology, Biochemistry, Organic Chemistry, and more'
+                        }
+                    ]
+                }
+            ]
+        },
+        'Lesson 2': {
+            title: 'Plant Secondary Metabolites — Classification, Biosynthesis & Functions',
+            objectives: [
+                'Define secondary metabolites and explain their significance in plant survival and human applications.',
+                'Classify major types of secondary metabolites (e.g., phenolics, alkaloids, terpenoids) and provide examples, including from Indonesian plants.',
+                'Understand the structural characteristics of phenolics, terpenoids, and alkaloids.',
+                'Describe the key biosynthetic pathways for secondary metabolites and their regulation.',
+                'Discuss the roles of secondary metabolites in plant defense, ecological interactions, and human medicine.',
+                'Recognize how environmental factors and modern techniques influence secondary metabolite production.'
+            ],
+            outline: [
+                {
+                    heading: 'What Are Secondary Metabolites?',
+                    content: `
+                        <p>Small organic molecules (mostly <3 kDa) derived from primary metabolism.</p>
+                        <p>Not vital for growth, but essential for:</p>
+                        <ul>
+                            <li>Defense against pests & microbes</li>
+                            <li>UV protection, pollinator attraction</li>
+                            <li>Plant competition (allelopathy)</li>
+                            <li>Symbiosis signaling (e.g., with mycorrhizae)</li>
+                            <li>Human pharmaceutical uses</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Classification of Secondary Metabolites',
+                    content: `
+                        <img src="https://ars.els-cdn.com/content/image/1-s2.0-S0304419X23000781-gr1.jpg" alt="Classification of Plant Secondary Metabolites" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figure: Summary of plant secondary metabolites</p>
+                        <p>Focus on three primary groups of secondary metabolites:</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Group</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Examples (Indonesian plants)</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role in Plant & Human Use</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Phenolics (Polyphenols)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Flavonoids (Quercetin in Gynura procumbens), Tannins (tea, cacao)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Antioxidant, UV protection, antimicrobial</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Quinine (Cinchona), Caffeine (Coffee), Vincristine (Catharanthus roseus)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Pest defense; medicines (e.g., antimalarial, oncologic)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Terpenoids (Isoprenoids)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Artemisinin (Artemisia annua), Limonene (Citrus)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Defense, aroma, pigments</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Also:</p>
+                        <ul>
+                            <li><strong>Saponins:</strong> Ginsenosides (Ginseng) – foam, immune modulating</li>
+                            <li><strong>Steroids:</strong> Diosgenin (Yam) – hormone precursor</li>
+                            <li><strong>Glucosinolates:</strong> Sinigrin (Broccoli) – defense, anticancer</li>
+                            <li><strong>Cyanogenic glycosides:</strong> Linamarin (Cassava) – cyanide defense</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Structural Notes',
+                    content: `
+                        <h4 class="text-lg font-semibold mb-2">3.1. Phenolic compounds</h4>
+                        <p>Phenolics are a chemical compound characterized by the presence of aromatic ring structure bearing one or more hydroxyl groups.</p>
+                        <p>Table: Classification of families of phenolic compounds</p>
+                        <img src="https://www.researchgate.net/publication/49658616/figure/tbl1/AS:601655754104869@1520457318356/Classification-of-families-of-phenolic-compounds.png" alt="Classification of families of phenolic compounds" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+
+                        <h4 class="text-lg font-semibold mb-2">3.2 Terpenoids</h4>
+                        <p>Terpenoids are oxygenated hydrocarbons derived from isoprene (2-Methyl-1,3-butadiene (CH₂=C(CH₃)-CH=CH₂)) units (C₅H₈)n.</p>
+                        <p>Table: classification of terpenes</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Number of isoprene units</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carbon atoms</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">1</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hemiterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C5</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Monoterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C10</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">3</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sesquiterpenes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C15</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">4</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Diterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C20</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">5</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sesterterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C25</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">6</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Triterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C30</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">7</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sesquarterterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C35</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">8</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Tetraterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">C40</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">More than 8</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Polyterpene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500"></td></tr>
+                            </tbody>
+                        </table>
+                        <img src="https://www.researchgate.net/profile/Engin-Tilkat/publication/371173284/figure/fig1/AS:11431281163525346@1685563147120/Classification-of-terpenes.ppm" alt="Classification of terpenes" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figures: classification of terpenes</p>
+
+                        <h4 class="text-lg font-semibold mb-2">3.3. Alkaloids</h4>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aspect</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key Information</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Definition</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids are nitrogen-containing organic compounds, mostly derived from amino acids.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Structure</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Typically contain at least one basic nitrogen atom in a heterocyclic ring.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Biosynthetic Origin</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Derived from amino acids like tryptophan, tyrosine, ornithine, lysine, or histidine.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Solubility</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Usually soluble in organic solvents (e.g., methanol, chloroform); form salts with acids.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Functions in Plants</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Natural defense agents — repel herbivores, insects, pathogens; can have allelopathic roles.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Biological Activity</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Often neuroactive, toxic, or medicinal; affect the nervous system and metabolism.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Examples</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">- Morphine (Papaver somniferum): analgesic<br/>- Quinine (Cinchona): antimalarial<br/>- Caffeine (Coffee): stimulant<br/>- Nicotine (Tobacco): stimulant/insecticide</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Detection Tests</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">- Dragendorff’s: orange-brown precipitate<br/>- Wagner’s: reddish-brown ppt<br/>- Mayer’s: cream/yellow ppt</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Medicinal Importance</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Many alkaloids are the basis for pharmaceutical drugs (e.g., morphine, codeine, vincristine).</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Toxicity</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Many are highly toxic at high doses (e.g., strychnine, atropine).</td></tr>
+                            </tbody>
+                        </table>
+                        <img src="https://www.researchgate.net/publication/26645471/figure/fig2/AS:202980130332682@1425405642506/Main-classes-of-alkaloid-precursors-and-derivatives-the-example-number-refers-to-the.png" alt="Main classes of alkaloid precursors and derivatives" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <img src="https://www.mdpi.com/molecules/molecules-25-03619/article_deploy/html/images/molecules-25-03619-sch001.png" alt="Main classes of alkaloid precursors and derivatives" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figures: Main classes of alkaloid precursors and derivatives</p>
+                    `
+                },
+                {
+                    heading: 'Biosynthesis of Secondary Metabolites',
+                    content: `
+                        <p>Plants convert simple primary molecules into complex metabolites via specific "pathways":</p>
+                        <img src="https://www.mdpi.com/forests/forests-13-01338/article_deploy/html/images/forests-13-01338-g001.png" alt="Biosynthesis of Secondary Metabolites" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figure: Biosynthesis of Secondary Metabolites</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pathway</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Products</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Primary Precursor</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Examples</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Shikimate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Phenolics, flavonoids, some alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Sugars → PEP + erythrose-4-P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Quercetin, Morphine</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Acetate/Polyketide</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Polyketides, tannins</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Acetyl-CoA</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Aflatoxins, Tea tannins</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Mevalonate (MVA)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenoids (sesquiterpenes, steroids)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Acetyl-CoA</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Taxol, Squalene</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MEP</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenoids (monoterpenes, diterpenes)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Pyruvate + G3P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Artemisinin, Limonene</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Amino-Acid Derived</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, glucosinolates, cyanogenic glycosides</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Amino acids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Caffeine, Nicotine</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Table: Abbreviations in Secondary Metabolite Biosynthesis</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Abbreviation</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Full Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role in Biosynthesis</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Pathways/Products</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PEP</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Phosphoenolpyruvate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Glycolysis intermediate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Combines with erythrose-4-phosphate to form aromatic precursors</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Shikimate → phenolics, flavonoids, some alkaloids</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Erythrose-4-P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Erythrose-4-phosphate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Pentose phosphate intermediate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Combines with PEP to start the shikimate pathway</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Shikimate → phenolics, flavonoids</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Acetyl-CoA</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Acetyl coenzyme A</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Central metabolic molecule</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Starting unit for both acetate/polyketide and MVA pathways</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Polyketides, tannins, terpenoids (via MVA)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MVA</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Mevalonate Pathway</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenoid biosynthesis route</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Produces isoprenoid precursors (IPP, DMAPP) from acetyl-CoA</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenoids: sesquiterpenes, steroids (e.g., Taxol, squalene)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MEP</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Methylerythritol Phosphate Pathway</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alternative terpenoid pathway</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Produces isoprenoids from pyruvate and G3P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenoids: monoterpenes, diterpenes (e.g., Artemisinin)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">G3P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Glyceraldehyde-3-phosphate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Glycolysis/Calvin cycle molecule</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Combines with pyruvate in MEP pathway to synthesize isoprenoid units</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">MEP → terpenoids (e.g., limonene)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Amino Acids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">—</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Protein building blocks</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Precursors for nitrogen-containing secondary metabolites</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, glucosinolates, cyanogenic glycosides (e.g., caffeine, nicotine)</td></tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Check Your Understanding',
+                    type: 'quiz',
+                    questions: [
+                        {
+                            question: 'Which pathway is responsible for the biosynthesis of phenolics and flavonoids?',
+                            options: [
+                                'Mevalonate (MVA) Pathway',
+                                'Shikimate Pathway',
+                                'Acetate/Polyketide Pathway',
+                                'MEP Pathway'
+                            ],
+                            correctAnswer: 'Shikimate Pathway'
+                        },
+                        {
+                            question: 'What is the primary precursor for terpenoids synthesized via the MVA pathway?',
+                            options: [
+                                'Pyruvate',
+                                'Amino acids',
+                                'Acetyl-CoA',
+                                'Erythrose-4-phosphate'
+                            ],
+                            correctAnswer: 'Acetyl-CoA'
+                        }
+                    ]
+                }
+            ]
+        },
+        'Lesson 3': {
+            title: 'Extraction Methods of Plant Secondary Metabolites',
+            objectives: [
+                'Explain the purpose and main goal of extraction in phytochemistry.',
+                'Identify key factors affecting extraction efficiency (solvent polarity, temperature, time, solvent-to-sample ratio, and particle size).',
+                'Match common solvents to their relative polarity and typical target compounds.',
+                'Describe the principles, procedures, advantages, and limitations of maceration, Soxhlet, MAE, and LLE.',
+                'Interpret a solvent miscibility matrix for planning extraction workflows.'
+            ],
+            outline: [
+                {
+                    heading: 'Introduction to Extraction in Phytochemistry',
+                    content: `
+                        <p><strong>Purpose of Extraction:</strong> To isolate secondary metabolites from plant materials for identification, analysis, and bioactivity testing.</p>
+                        <p><strong>Main Goal:</strong> Transfer target compounds from solid plant material into a liquid solvent.</p>
+                        <p><strong>Key Factors Affecting Extraction:</strong></p>
+                        <ul>
+                            <li><strong>Solvent Type:</strong> Polarity determines which compounds dissolve.</li>
+                            <li><strong>Temperature:</strong> Affects extraction speed but may degrade compounds.</li>
+                            <li><strong>Time:</strong> Longer times increase yield but may be inefficient.</li>
+                            <li><strong>Solvent-to-Sample Ratio:</strong> Impacts extraction efficiency.</li>
+                            <li><strong>Particle Size:</strong> Smaller particles increase surface area for better extraction.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Polarity and Solvent Selection',
+                    content: `
+                        <p><strong>Principle:</strong> "Like dissolves like", polar solvents dissolve polar compounds (e.g., tannins), while non-polar solvents dissolve non-polar compounds (e.g., essential oils).</p>
+                        <p>A polarity continuum (e.g., Water > MeOH > EtOH > Acetone > DCM > Hexane).</p>
+                        <p>Table: Common Solvents Used in Phytochemical Extraction</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solvent</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Relative Polarity</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Polarity Type</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Typical Target Compounds</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Key Notes & Uses</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">n-Hexane</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.009</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Non-polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Lipids, essential oils, waxes, chlorophylls, steroids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Commonly used for defatting and isolating volatile, non-polar compounds</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Petroleum Ether</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.117</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Non-polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Similar to n-hexane: fatty acids, pigments, non-polar alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ideal for initial extraction steps; dissolves lipophilic compounds</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Diethyl Ether</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.117</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Low-polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, coumarins, fatty acids, terpenoïds</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Volatile; used for quick extraction of low-polar bioactives</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ethyl Acetate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.228</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Medium polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Flavonoids, phenolics, terpenoids, alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Excellent for semi-polar secondary metabolites</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Chloroform (CHCl₃)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.259</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Medium polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Lipophilic flavonoids, terpenoids, semi-polar alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Widely used in partitioning and chromatographic separation</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Dichloromethane (DCM)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.309</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Medium polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, flavonoids, lipids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Often combined with methanol or water for solvent partitioning</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Acetone</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.355</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Medium–High polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Phenolics, tannins, flavonoids, saponins</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Versatile; works for a wide range of polar and semi-polar compounds</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">n-Butanol (n-BuOH)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.586</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Saponins, tannins, glycosides</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Used in liquid-liquid extraction; targets polar fractions</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ethanol (EtOH)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.654</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Flavonoids, tannins, phenolics, alkaloids, glycosides</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Food-grade, green solvent; safe and widely used in research and industry</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Methanol (MeOH)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.762</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, phenolics, anthocyanins, flavonoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Strong polar solvent; ideal for lab-scale extractions (toxic, needs care)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Water (H₂O)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1.000</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Highly polar</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Carbohydrates, tannins, amino acids, proteins, hydrophilic phenolics</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Traditional for decoctions and infusions; targets strongly polar compounds</td></tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Main Extraction Methods',
+                    content: `
+                        <h4 class="text-lg font-semibold mb-2">3.1. Maceration (Cold or Hot Soaking)</h4>
+                        <p><strong>Principle:</strong> Plant material is soaked in a solvent at room temperature or slightly warmed, allowing compounds to diffuse into the solvent.</p>
+                        <p><strong>Procedure:</strong></p>
+                        <ul>
+                            <li>Grind plant material to increase surface area.</li>
+                            <li>Soak in solvent (e.g., 70% EtOH) for hours to days.</li>
+                            <li>Stir/agitate to enhance diffusion.</li>
+                            <li>Filter and collect the extract.</li>
+                        </ul>
+                        <p><strong>Advantages:</strong></p>
+                        <ul>
+                            <li>Simple and inexpensive.</li>
+                            <li>Preserves heat-sensitive compounds (e.g., anthocyanins).</li>
+                        </ul>
+                        <p><strong>Limitations:</strong></p>
+                        <ul>
+                            <li>Time-consuming (24–72 hours).</li>
+                            <li>May not extract all compounds (less efficient).</li>
+                            <li><strong>Safety:</strong> Use gloves and work in a fume hood when handling volatile solvents like methanol.</li>
+                        </ul>
+                        <img src="https://i0.wp.com/pediaa.com/wp-content/uploads/2018/07/Difference-Between-Maceration-and-Percolation_Figure1.jpg?resize=553%2C402" alt="Maceration" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figure: maceration</p>
+
+                        <h4 class="text-lg font-semibold mb-2">3.2. Soxhlet Extraction</h4>
+                        <p><strong>Principle:</strong> Continuous cycling of hot solvent through plant material for efficient extraction.</p>
+                        <p><strong>Procedure:</strong></p>
+                        <ul>
+                            <li>Place plant powder in a thimble.</li>
+                            <li>Heat solvent; it evaporates, condenses, and drips over the sample repeatedly.</li>
+                            <li>Cycle for 6–24 hours.</li>
+                            <li>Collect the extract.</li>
+                        </ul>
+                        <p><strong>Advantages:</strong></p>
+                        <ul>
+                            <li>More efficient than maceration.</li>
+                            <li>Minimal solvent loss.</li>
+                        </ul>
+                        <p><strong>Limitations:</strong></p>
+                        <ul>
+                            <li>Unsuitable for heat-sensitive compounds (e.g., some phenolics).</li>
+                            <li>Requires specialized equipment.</li>
+                            <li><strong>Safety:</strong> Ensure proper ventilation; handle hot solvents with care to avoid burns.</li>
+                        </ul>
+                        <img src="https://ars.els-cdn.com/content/image/3-s2.0-B9780323917926000078-f02-02-9780323917926.jpg" alt="Soxhlet extraction" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figure: Soxhlet extraction</p>
+
+                        <h4 class="text-lg font-semibold mb-2">3.3. Microwave-Assisted Extraction (MAE)</h4>
+                        <p><strong>Principle:</strong> Microwaves rapidly heat solvents and plant tissue, rupturing cell walls to release compounds. Aligns with green chemistry by reducing solvent use.</p>
+                        <p><strong>Procedure:</strong></p>
+                        <ul>
+                            <li>Mix plant material with solvent in a closed microwave-safe vessel.</li>
+                            <li>Apply microwaves for 1–10 minutes.</li>
+                            <li>Filter and collect the extract.</li>
+                        </ul>
+                        <p><strong>Advantages:</strong></p>
+                        <ul>
+                            <li>Fast (minutes vs. hours).</li>
+                            <li>High efficiency, low solvent use.</li>
+                        </ul>
+                        <p><strong>Limitations:</strong></p>
+                        <ul>
+                            <li>Expensive equipment.</li>
+                            <li>Requires optimization to prevent degradation (e.g., anthocyanins in Curcuma longa).</li>
+                            <li><strong>Safety:</strong> Use microwave-safe vessels; avoid overheating to prevent explosions.</li>
+                        </ul>
+                        <img src="https://www.researchgate.net/publication/350295397/figure/fig18/AS:11431281115877314@1675137652633/Microwave-assisted-extraction-MAE-extraction-procedure-Source-adapted-from-63.png" alt="Microwave-assisted-extraction" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figure: Microwave-assisted-extraction</p>
+
+                        <h4 class="text-lg font-semibold mb-2">3.4. Liquid-Liquid Extraction (LLE)</h4>
+                        <p><strong>Principle:</strong> Compounds partition between two immiscible solvents (e.g., water and an organic solvent) based on polarity, typically as a secondary step after initial extraction.</p>
+                        <p><strong>Purpose:</strong> Fractionate crude extracts into polarity-based groups for analysis.</p>
+                        <p><strong>Procedure:</strong></p>
+                        <ul>
+                            <li>Dissolve crude extract in water.</li>
+                            <li>Add immiscible organic solvent (e.g., hexane, DCM).</li>
+                            <li>Shake and allow layers to separate.</li>
+                            <li>Collect solvent layers for analysis.</li>
+                        </ul>
+                        <p><strong>Advantages:</strong></p>
+                        <ul>
+                            <li>Effective for fractionation.</li>
+                            <li>Concentrates similar compounds.</li>
+                        </ul>
+                        <p><strong>Limitations:</strong></p>
+                        <ul>
+                            <li>Solvent loss.</li>
+                            <li>Labor-intensive (multiple steps).</li>
+                            <li><strong>Safety:</strong> Work in a fume hood; avoid skin contact with DCM or hexane.</li>
+                        </ul>
+                        <img src="https://veeprho.com/Liquid-liquid-extraction_LLE-1024x287.jpeg" alt="Liquid-liquid extraction" class="w-full h-auto rounded-lg shadow-md mb-4"/>
+                        <p class="text-sm text-gray-600 text-center">Figure: Liquid-liquid extraction</p>
+
+                        <p>Below is a complete miscibility matrix for the most common solvents used in phytochemical extraction. Each cell shows whether two solvents are:</p>
+                        <p><strong>M</strong> = fully miscible (all proportions)<br/><strong>P</strong> = partially miscible (limited solubility)</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"></th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Water</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">MeOH</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EtOH</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acetone</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">EtOAc</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">DCM</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CHCl₃</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Hexane</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">PE</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">nBuOH</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Water</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">MeOH</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">EtOH</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Acetone</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">EtOAc</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">DCM</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">CHCl₃</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Hexane</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PE</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">I</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">nBuOH</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">M</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">P</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">–</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>I</strong> = immiscible (negligible mutual solubility)</p>
+                    `
+                },
+                {
+                    heading: 'Check Your Understanding',
+                    type: 'quiz',
+                    questions: [
+                        {
+                            question: 'What is the primary purpose of extraction in phytochemistry?',
+                            options: [
+                                'To synthesize new compounds.',
+                                'To isolate secondary metabolites from plant materials.',
+                                'To analyze soil composition.',
+                                'To grow plants faster.'
+                            ],
+                            correctAnswer: 'To isolate secondary metabolites from plant materials.'
+                        },
+                        {
+                            question: 'Which of the following factors does NOT significantly affect extraction efficiency?',
+                            options: [
+                                'Solvent Type',
+                                'Temperature',
+                                'Time',
+                                'Moon Phase'
+                            ],
+                            correctAnswer: 'Moon Phase'
+                        }
+                    ]
+                }
+            ]
+        },
+        'Lesson 4': {
+            title: 'Qualitative Screening of Plant Secondary Metabolites — Principles and Tests',
+            objectives: [
+                'Explain the purpose and role of qualitative screening in the phytochemical workflow.',
+                'Describe the standard procedure for preliminary phytochemical tests.',
+                'Perform key reagent tests for major metabolite classes.',
+                'Interpret observations (color change, precipitate, foam) to draw conclusions.',
+                'Record results in a structured table for analysis.'
+            ],
+            outline: [
+                {
+                    heading: 'Introduction to Qualitative Screening',
+                    content: `
+                        <p><strong>Purpose:</strong> Rapid identification of secondary metabolite classes (e.g., flavonoids, alkaloids) in crude plant extracts.</p>
+                        <p><strong>Role in Workflow:</strong> Guides subsequent isolation, purification (e.g., chromatography), and bioactivity testing.</p>
+                        <p><strong>Key Principle:</strong> Reagents react with specific functional groups to produce observable changes (color, precipitate, foam).</p>
+                        <p><strong>Significance:</strong> Enables preliminary analysis of bioactive compounds, supporting quality control of herbal products, especially for Indonesian plants like <em>Curcuma longa</em> (turmeric).</p>
+                    `
+                },
+                {
+                    heading: 'Standard Procedure for Phytochemical Screening',
+                    content: `
+                        <p><strong>Step 1: Prepare Plant Extract</strong></p>
+                        <p>Use suitable solvents based on the target metabolite:</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Alcoholic extract</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">→</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids, Flavonoids</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Aqueous extract</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">→</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Saponins, Tannins</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Chloroform extract</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">→</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenoids, Steroids</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Step 2: Add Specific Reagent</strong></p>
+                        <ul>
+                            <li>Add 1–2 mL of the reagent to 1 mL of the plant extract in a test tube.</li>
+                            <li>Use labeled tubes and reagent controls.</li>
+                        </ul>
+                        <p><strong>Step 3: Mix and Observe</strong></p>
+                        <ul>
+                            <li>Mix gently or shake as required.</li>
+                            <li>Observe for color changes, precipitate, foam, or interface rings.</li>
+                        </ul>
+                        <p><strong>Step 4: Record and Interpret</strong></p>
+                        <p>Fill in a table with:</p>
+                        <ul>
+                            <li>Test name</li>
+                            <li>Observation</li>
+                            <li>Conclusion (present or absent)</li>
+                        </ul>
+                        <p>Table: Common Screening Tests for Major Metabolite Classes</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metabolite Class</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Test Name & Reagents</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Positive Observation</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Flavonoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Shinoda Test (Mg + conc. HCl)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Pink to red coloration</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Confirms presence of flavonoids. Some may turn green with FeCl₃. Use alcoholic extract.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dragendorff’s Reagent</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Orange-brown precipitate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Other tests: Wagner’s (reddish-brown ppt), Mayer’s (cream ppt). Use acidic or alcoholic extract.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Saponins</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Froth Test (shaken with distilled water)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Stable froth (>1 cm) lasting a few minutes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Indicates saponins’ surfactant properties. Use aqueous extract.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Tannins</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ferric Chloride Test (FeCl₃ solution)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue-black or greenish coloration</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Confirmed also by gelatin test (white ppt with 1% gelatin). Use aqueous or alcoholic extract.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Terpenoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Salkowski Test (Chloroform + conc. H₂SO₄)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Reddish-brown ring at the interface</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Detects triterpenes and sterols. Use chloroform extract.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Steroids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Liebermann-Burchard Test (Acetic anhydride + H₂SO₄)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue-green or emerald coloration</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Specific for steroidal nucleus. Use chloroform extract.</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Test Details:</strong></p>
+                        <ul>
+                            <li><strong>Flavonoids (Shinoda Test):</strong> Magnesium and HCl reduce flavonoids, forming a colored complex (e.g., pink for quercetin in <em>Gynura procumbens</em>).</li>
+                            <li><strong>Alkaloids (Dragendorff’s Test):</strong> Bismuth in reagent binds nitrogen in alkaloids, forming a precipitate (e.g., quinine in <em>Cinchona</em>).</li>
+                            <li><strong>Saponins (Froth Test):</strong> Saponins lower surface tension, creating stable foam (e.g., ginsenosides in ginseng).</li>
+                            <li><strong>Tannins (Ferric Chloride Test):</strong> Tannins complex with Fe³⁺, producing color (e.g., tannins in tea).</li>
+                            <li><strong>Terpenoids (Salkowski Test):</strong> H₂SO₄ reacts with terpenoids, forming a colored ring (e.g., limonene in <em>Citrus</em>).</li>
+                            <li><strong>Steroids (Liebermann-Burchard Test):</strong> H₂SO₄ and acetic anhydride react with steroidal rings, producing color (e.g., diosgenin in <em>Dioscorea</em>).</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Check Your Understanding',
+                    type: 'quiz',
+                    questions: [
+                        {
+                            question: 'What is the purpose of qualitative screening in phytochemistry?',
+                            options: [
+                                'To purify compounds to 100% purity.',
+                                'To rapidly identify secondary metabolite classes in crude plant extracts.',
+                                'To determine the exact molecular weight of compounds.',
+                                'To synthesize new plant compounds.'
+                            ],
+                            correctAnswer: 'To rapidly identify secondary metabolite classes in crude plant extracts.'
+                        },
+                        {
+                            question: 'Which extract type is typically used to screen for Saponins?',
+                            options: [
+                                'Alcoholic extract',
+                                'Aqueous extract',
+                                'Chloroform extract',
+                                'Hexane extract'
+                            ],
+                            correctAnswer: 'Aqueous extract'
+                        }
+                    ]
+                }
+            ]
+        },
+        'Lesson 5': {
+            title: 'Thin Layer Chromatography (TLC) — Principles, Procedure, and Application to Plant Extracts',
+            objectives: [
+                'Understand the working principle of TLC.',
+                'Execute a TLC procedure with plant extracts.',
+                'Interpret results and calculate Rf values.'
+            ],
+            outline: [
+                {
+                    heading: 'Introduction to TLC',
+                    content: `
+                        <p><strong>Definition:</strong> Thin Layer Chromatography (TLC) is a technique to separate non-volatile mixtures, like plant extracts, based on how compounds interact with a stationary phase (e.g., silica gel) and a mobile phase (solvent).</p>
+                        <p><strong>Principle:</strong> Compounds move through a stationary phase (silica gel) with a mobile phase (solvent). Separation occurs based on compound polarity and affinity for each phase. Polar compounds stick more to the stationary phase, moving slowly, while less polar compounds travel faster with the mobile phase, enabling separation.</p>
+                    `
+                },
+                {
+                    heading: 'Components of a TLC System',
+                    content: `
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Component</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Stationary Phase</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Usually silica gel or alumina coated on a glass or plastic plate</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Mobile Phase</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Solvent or solvent mixture selected based on target compound polarity</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Sample</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Plant extract or purified compound applied as spot.</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Chamber</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Closed container saturated with solvent vapor to promote uniform movement</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Visualization</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">UV light or chemical spray reagents to detect separated spots</td></tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Procedure for TLC Analysis',
+                    content: `
+                        <p><strong>Step 1: Plate Preparation</strong></p>
+                        <p>Cut TLC plate to desired size (e.g., 5x10 cm). Draw a pencil baseline 1 cm from the bottom.</p>
+                        <p><strong>Step 2: Sample Application</strong></p>
+                        <p>Apply small spots (2–3 mm) of sample and standard with capillary tubes along the baseline.</p>
+                        <p><strong>Step 3: Chamber Preparation</strong></p>
+                        <p>Add mobile phase to 0.5–1 cm depth in the chamber. Insert filter paper to saturate the chamber.</p>
+                        <p><strong>Step 4: Development</strong></p>
+                        <p>Place the plate vertically in the chamber without touching the sides. Allow solvent to rise near the top.</p>
+                        <p><strong>Step 5: Visualization</strong></p>
+                        <p>Dry plate and inspect under UV light (254 nm for dark spots, 366 nm for fluorescence) or apply spray reagents:</p>
+                        <ul>
+                            <li>FeCl₃: Blue-black for phenolics/flavonoids.</li>
+                            <li>Dragendorff’s: Orange for alkaloids.</li>
+                            <li>Vanillin-sulfuric acid: Purple/multicolored for terpenoids (heat at 100°C, 5 minutes).</li>
+                            <li>Anisaldehyde-sulfuric acid: Multicolored for terpenoids/saponins (heat at 100°C).</li>
+                        </ul>
+                        <p><strong>Notes:</strong></p>
+                        <ul>
+                            <li>Spray reagents should be applied in a fume hood using fine mist spray bottles.</li>
+                            <li>After spraying, plates should be gently heated (if required by the reagent) to develop clear visual spots.</li>
+                            <li>For enhanced accuracy, standard references of each metabolite class can be run alongside the samples.</li>
+                        </ul>
+                        <p><strong>Step 6: Rf Calculation</strong></p>
+                        <p>Rf = (Distance moved by compound) / (Distance moved by solvent front)</p>
+                    `
+                },
+                {
+                    heading: 'Solvent Systems for Different Metabolite Classes',
+                    content: `
+                        <p>Solvent systems are chosen based on the polarity of target compounds.</p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Metabolite Class</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solvent System</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Detection Method</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Flavonoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">EtOAc:MeOH:H₂O (8:1:1)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">UV at 366 nm, AlCl₃ spray (yellow fluorescence)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">CHCl₃:MeOH:NH₄OH (9:1:0.1)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dragendorff’s reagent (orange-brown spots)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Terpenoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Hexane:EtOAc (7:3)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Anisaldehyde-sulfuric acid (multicolor spots)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Saponins</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">n-BuOH:AcOH:H₂O (4:1:5)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Anisaldehyde-sulfuric acid (purple-blue spots)</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Phenolics</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">CHCl₃:MeOH (9:1)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">FeCl₃ (dark blue/black spots)</td></tr>
+                            </tbody>
+                        </table>
+                        <p>Polar solvents (e.g., methanol) move polar compounds faster, while non-polar solvents (e.g., hexane) suit less polar compounds.</p>
+                    `
+                },
+                {
+                    heading: 'Interpretation of TLC Results',
+                    content: `
+                        <ul>
+                            <li><strong>Number of Spots:</strong> Indicates the number of compounds in the extract.</li>
+                            <li><strong>Rf Values:</strong> Compare with standards to identify compounds (e.g., Rf 0.5 matches a known flavonoid).</li>
+                            <li><strong>Color & Fluorescence:</strong> Suggests compound types (e.g., yellow fluorescence for flavonoids).</li>
+                            <li><strong>Comparison with Standards:</strong> Confirms presence of known phytochemicals.</li>
+                        </ul>
+                    `
+                },
+                {
+                    heading: 'Interpretation Table',
+                    content: `
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Compound Class</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Typical Rf</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Visualization Method</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color/Fluorescence</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Flavonoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.3–0.7</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">UV, Vanillin</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yellow/green under UV</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Alkaloids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.2–0.6</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dragendorff</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Orange/brown</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Terpenoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.5–0.9</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Vanillin, KMnO4</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Purple/brown/red spots</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Steroids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.3–0.7</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Vanillin-H2SO4</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue/violet spots</td></tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Solvent polarity index in chromatography:',
+                    content: `
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Solvent (mobil phase)</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Polarity index</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Hexane</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">0.1</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Toluene</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.4</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dichloromethane</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3.1</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Chloroform</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4.1</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ethyl Acetate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">4.4</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Acetone</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5.1</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Methanol</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">2.1-5.5</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Ethanol</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">5.2</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Water</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">9.0</td></tr>
+                            </tbody>
+                        </table>
+                        <p><strong>Phase stationaries:</strong></p>
+                        <ul>
+                            <li><strong>Silica gel (SiO₂):</strong> strongly polar (many hydroxyl groups on its surface and can form hydrogen bonds) ~ 9-10 or more.</li>
+                            <li><strong>Alumina (acidic):</strong> ~ 8</li>
+                            <li><strong>Alumina (neutral):</strong> ~ 6</li>
+                        </ul>
+                        <p>Silica gel (SiO₂) is always the stationary phase in normal phase TLC, and is very polar than solvent.</p>
+                        <p><strong>TLC Stains and Their Characteristics for the TLC plate visualisation</strong></p>
+                        <table class="min-w-full divide-y divide-gray-200 rounded-lg overflow-hidden shadow-md mb-4">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stain Name</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Target Functional Group(s)</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Color of Spots</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Needs Heating?</th>
+                                    <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notes</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">UV Light (254/366 nm)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Aromatics, conjugated π-systems</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dark spots on green background</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Used for UV-active compounds only; non-destructive</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Iodine vapor</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Many organics (alkenes, aromatics)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yellow-brown</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Reversible, temporary; non-destructive</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ninhydrin</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Amines, amino acids, peptides</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Purple (Ruhemann’s purple)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes (100–110 °C)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Excellent for detecting free amines</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Ferric chloride (FeCl₃)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Phenols, enols</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Green, blue, violet</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Specific for phenolic compounds</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">2,4-Dinitrophenylhydrazine (2,4-DNP)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Aldehydes, ketones</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yellow, orange</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No/Yes (slight)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Forms hydrazones; confirm presence of carbonyl groups</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Vanillin–H₂SO₄</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alcohols, aldehydes, phenols, terpenes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue, green, purple, red</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Versatile and semi-universal</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Anisaldehyde–H₂SO₄</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Terpenes, steroids, sugars, lipids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue, pink, green, violet</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes (110 °C)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Very sensitive and versatile; often used in natural product TLC</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">KMnO₄</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Oxidizable compounds (alkenes, alcohols, sugars)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Brown/yellow on purple background</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">General detection of many unsaturated and reducing compounds</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">PMA (Phosphomolybdic acid)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alcohols, phenols, sugars, alkaloids, flavonoids</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue/green</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Universal stain; very common in phytochemistry</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Dragendorff’s reagent</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Alkaloids (nitrogen-containing bases)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Orange to brown</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">No</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Specific and excellent for alkaloids</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Cerium(IV) sulfate–molybdate</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">General organics</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Blue</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Good general-purpose stain</td></tr>
+                                <tr><td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">Sulfuric acid spray (10%)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Most organics (charred)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Black-brown spots</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Yes (strong heating)</td><td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Very universal, but destructive</td></tr>
+                            </tbody>
+                        </table>
+                    `
+                },
+                {
+                    heading: 'Check Your Understanding',
+                    type: 'quiz',
+                    questions: [
+                        {
+                            question: 'What is the working principle of Thin Layer Chromatography (TLC)?',
+                            options: [
+                                'Compounds are separated based on their boiling points.',
+                                'Compounds move through a stationary phase with a mobile phase, separating based on polarity and affinity.',
+                                'Compounds are identified by their molecular weight only.',
+                                'Compounds are extracted using high pressure.'
+                            ],
+                            correctAnswer: 'Compounds move through a stationary phase with a mobile phase, separating based on polarity and affinity.'
+                        },
+                        {
+                            question: 'What is the typical stationary phase used in normal phase TLC?',
+                            options: [
+                                'Water',
+                                'Ethanol',
+                                'Silica gel (SiO₂)',
+                                'Activated carbon'
+                            ],
+                            correctAnswer: 'Silica gel (SiO₂)'
+                        }
+                    ]
+                }
+            ]
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gradient-to-br from-green-50 to-teal-100 font-inter text-gray-900 p-4 sm:p-6 lg:p-8">
+            <style>
+                {`
+                @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+                body {
+                    font-family: 'Inter', sans-serif;
+                }
+                /* Custom styles for tables within the prose class */
+                .prose table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-bottom: 1rem;
+                    border-radius: 0.5rem; /* Apply rounded corners to the table */
+                    overflow: hidden; /* Ensure content respects rounded corners */
+                }
+                .prose th, .prose td {
+                    border: 1px solid #e2e8f0; /* Light gray border */
+                    padding: 0.75rem;
+                    text-align: left;
+                }
+                .prose th {
+                    background-color: #f8fafc; /* Lighter background for headers */
+                    font-weight: 600;
+                    color: #475569; /* Darker text for headers */
+                    text-transform: uppercase;
+                    font-size: 0.75rem;
+                }
+                .prose tr:nth-child(even) {
+                    background-color: #f0f9ff; /* Light blue for even rows */
+                }
+                .prose tr:hover {
+                    background-color: #e0f2fe; /* Slightly darker blue on hover */
+                }
+                .prose img {
+                    max-width: 100%;
+                    height: auto;
+                    display: block;
+                    margin-left: auto;
+                    margin-right: auto;
+                    border-radius: 0.5rem; /* Rounded corners for images */
+                    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Subtle shadow for images */
+                    cursor: pointer; /* Indicate clickable image */
+                    transition: transform 0.2s ease-in-out;
+                }
+                .prose img:hover {
+                    transform: scale(1.02);
+                }
+
+                /* Animations */
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes fadeInUp {
+                    from { opacity: 0; transform: translateY(20px); }
+                    to { opacity: 1; transform: translateY(0); }
+                }
+                @keyframes slideIn {
+                    from { opacity: 0; transform: translateX(-20px); }
+                    to { opacity: 1; transform: translateX(0); }
+                }
+                @keyframes scaleIn {
+                    from { transform: scale(0.9); opacity: 0; }
+                    to { transform: scale(1); opacity: 1; }
+                }
+
+                .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+                .animate-fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+                .animate-slide-in { animation: slideIn 0.4s ease-out forwards; }
+                .animate-scale-in { animation: scaleIn 0.3s ease-out forwards; }
+                `}
+            </style>
+            <header className="text-center mb-8">
+                <h1 className="text-4xl sm:text-5xl font-extrabold text-teal-800 drop-shadow-lg">
+                    Phytochemistry Lesson App
+                </h1>
+                <p className="text-lg text-teal-600 mt-2">Interactive Learning for Chemistry Education</p>
+            </header>
+
+            <nav className="mb-8 flex flex-wrap justify-center gap-3">
+                {Object.keys(lessons).map((lessonKey) => (
+                    <button
+                        key={lessonKey}
+                        onClick={() => setSelectedLesson(lessonKey)}
+                        className={`
+                            px-5 py-2 rounded-full text-sm font-medium transition-all duration-300 ease-in-out transform
+                            ${selectedLesson === lessonKey
+                                ? 'bg-teal-600 text-white shadow-lg scale-105'
+                                : 'bg-white text-teal-700 border border-teal-300 hover:bg-teal-50 hover:border-teal-400 hover:scale-105'
+                            }
+                        `}
+                    >
+                        {lessonKey.replace('Lesson ', 'Lesson ')}
+                    </button>
+                ))}
+            </nav>
+
+            <main className="max-w-4xl mx-auto">
+                <LessonContent lesson={lessons[selectedLesson]} />
+            </main>
+        </div>
+    );
+};
+
+export default App;

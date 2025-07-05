@@ -1,0 +1,978 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Phytochemistry Quizzes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .quiz-container {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .quiz-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .draggable {
+            touch-action: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .draggable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .drop-zone {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            transform: scale(1.02);
+        }
+
+        .feedback-correct {
+            animation: flash-green 0.5s ease;
+        }
+
+        .feedback-incorrect {
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes flash-green {
+            0% { background-color: #fff; }
+            50% { background-color: #a7f3d0; }
+            100% { background-color: #fff; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            animation: confetti 2s ease-out forwards;
+        }
+
+        .tab-button {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, transform 0.2s;
+        }
+
+        .tab-button.active {
+            background-color: #059669;
+            color: white;
+            border-color: #059669;
+            transform: scale(1.05);
+        }
+
+        .tab-button:hover {
+            transform: scale(1.05);
+        }
+
+        .option-label {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .option-label:hover {
+            transform: scale(1.02);
+        }
+
+        #language-toggle {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #language-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        #google_translate_element {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-emerald-700 mb-2 animate-pulse">Phytochemistry Adventure</h1>
+            <p class="text-lg text-gray-600">Embark on a journey through plant chemistry with these interactive quizzes!</p>
+            <button id="language-toggle" onclick="toggleLanguage()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition shadow-md">
+                Switch to Bahasa Indonesia
+            </button>
+            <div id="google_translate_element"></div>
+        </header>
+
+        <div class="mb-8 border-b border-gray-200">
+            <nav class="flex flex-wrap -mb-px justify-center" aria-label="Tabs">
+                <button onclick="showQuiz(1)" id="tab1" class="tab-button active text-emerald-600 border-b-2 border-emerald-600 whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 focus:outline-none">
+                    <i class="fas fa-leaf mr-2"></i>Metabolite Sorting
+                </button>
+                <button onclick="showQuiz(2)" id="tab2" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-seedling mr-2"></i>Plant-to-Product
+                </button>
+                <button onclick="showQuiz(3)" id="tab3" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-vial mr-2"></i>Workflow Sequencer
+                </button>
+                <button onclick="showQuiz(4)" id="tab4" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-book mr-2"></i>Core Concepts Quiz
+                </button>
+                <button onclick="showQuiz(5)" id="tab5" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-globe mr-2"></i>Science Connections
+                </button>
+            </nav>
+        </div>
+
+        <main>
+            <div id="quiz1" class="quiz-container active">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 1: Metabolite Sorting Game</h2>
+                    <p class="text-gray-600 mb-6">Drag each compound to the correct metabolite category.</p>
+                    <div class="mb-6">
+                        <h3 class="font-medium text-center mb-2">Compounds to Sort:</h3>
+                        <div id="q1-items" class="flex flex-wrap gap-3 justify-center bg-gray-100 p-4 rounded-md"></div>
+                    </div>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="primary">
+                            <h3 class="font-bold text-lg text-center text-blue-600">Primary Metabolites</h3>
+                            <p class="text-sm text-center text-gray-500">(Essential for basic growth & reproduction)</p>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="secondary">
+                            <h3 class="font-bold text-lg text-center text-red-600">Secondary Metabolites</h3>
+                            <p class="text-sm text-center text-gray-500">(Used for defense, adaptation & interaction)</p>
+                        </div>
+                    </div>
+                    <div id="q1-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz2" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 2: Plant-to-Product Matching</h2>
+                    <p class="text-gray-600 mb-6">Match the plant to its famous derived product or medicine.</p>
+                    <div id="q2-grid" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+                    <div id="q2-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz3" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 3: Phytochemical Workflow Sequencer</h2>
+                    <p class="text-gray-600 mb-6">Drag and drop the steps of a typical phytochemical analysis into the correct order.</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-medium text-center mb-2">Unordered Steps:</h3>
+                            <div id="q3-source" class="space-y-3 p-4 bg-gray-100 rounded-md min-h-[200px]"></div>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-center mb-2">Your Ordered Workflow:</h3>
+                            <div id="q3-target" class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[200px] space-y-3 bg-gray-50"></div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button onclick="checkSequence()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Check Order</button>
+                    </div>
+                    <div id="q3-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz4" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 4: Core Concepts Quiz</h2>
+                    <p class="text-gray-600 mb-6">Test your understanding of fundamental phytochemistry concepts.</p>
+                    <div id="q4-question-area" class="text-center p-4 bg-gray-100 rounded-md min-h-[150px]"></div>
+                    <div class="text-center mt-6">
+                        <button onclick="submitQuiz4Answer()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Submit Answer</button>
+                    </div>
+                    <div id="q4-feedback" class="mt-4 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz5" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 5: Science Connections Map</h2>
+                    <p class="text-gray-600 mb-6">Match each scientific field or application to its connection with Phytochemistry.</p>
+                    <div id="q5-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"></div>
+                    <div id="q5-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+        </main>
+
+        <div class="text-center mt-10">
+            <button onclick="resetAllQuizzes()" class="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition">
+                <i class="fas fa-redo mr-2"></i>Reset All Quizzes
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuiz = 1;
+        let currentLanguage = 'en';
+
+        const quiz1Data = {
+            items: [
+                { id: 'item1', text: 'Glucose', category: 'primary', text_id: 'Glukosa' },
+                { id: 'item2', text: 'Terpenoids', category: 'secondary', text_id: 'Terpenoid' },
+                { id: 'item3', text: 'Amino Acids', category: 'primary', text_id: 'Asam Amino' },
+                { id: 'item4', text: 'Alkaloids', category: 'secondary', text_id: 'Alkaloid' },
+                { id: 'item5', text: 'Lipids', category: 'primary', text_id: 'Lipid' },
+                { id: 'item6', text: 'Flavonoids', category: 'secondary', text_id: 'Flavonoid' }
+            ],
+            score: 0
+        };
+
+        const quiz2Data = {
+            pairs: [
+                { plant: 'Poppy Plant (Papaver somniferum)', product: 'Morphine (Analgesic)', matched: false, plant_id: 'Tanaman Poppy (Papaver somniferum)', product_id: 'Morfin (Analgesik)' },
+                { plant: 'Pacific Yew Tree (Taxus brevifolia)', product: 'Paclitaxel (Anticancer)', matched: false, plant_id: 'Pohon Yew Pasifik (Taxus brevifolia)', product_id: 'Paclitaxel (Antikanker)' },
+                { plant: 'Sweet Wormwood (Artemisia annua)', product: 'Artemisinin (Antimalarial)', matched: false, plant_id: 'Wormwood Manis (Artemisia annua)', product_id: 'Artemisinin (Antimalaria)' },
+                { plant: 'Cinchona Tree', product: 'Quinine (Antimalarial)', matched: false, plant_id: 'Pohon Kina', product_id: 'Kinin (Antimalaria)' },
+            ],
+            selectedPlant: null,
+            selectedProduct: null,
+            score: 0
+        };
+
+        const quiz3Data = {
+            steps: [
+                { id: 'step1', text: 'Plant Material Preparation (Drying & Grinding)', order: 1, text_id: 'Persiapan Bahan Tanaman (Pengeringan & Penggilingan)' },
+                { id: 'step2', text: 'Extraction (e.g., Maceration/Soxhlet)', order: 2, text_id: 'Ekstraksi (mis., Maserasi/Soxhlet)' },
+                { id: 'step3', text: 'Phytochemical Screening (Qualitative Tests)', order: 3, text_id: 'Skrining Fitokimia (Tes Kualitatif)' },
+                { id: 'step4', text: 'Chromatographic Separation (e.g., TLC)', order: 4, text_id: 'Pemisahan Kromatografi (mis., TLC)' },
+                { id: 'step5', text: 'Isolation and Purification of Compounds (e.g., HPLC)', order: 5, text_id: 'Isolasi dan Pemurnian Senyawa (mis., HPLC)' },
+                { id: 'step6', text: 'Structure Elucidation (e.g., NMR/MS)', order: 6, text_id: 'Penjelasan Struktur (mis., NMR/MS)' },
+            ]
+        };
+
+        const quiz4Data = {
+            questions: [
+                {
+                    question: "What is phytochemistry primarily concerned with?",
+                    question_id: "Apa yang menjadi fokus utama fitokimia?",
+                    options: [
+                        { text: "A. Studying animal hormones", text_id: "A. Mempelajari hormon hewan" },
+                        { text: "B. Analyzing chemicals produced by plants", text_id: "B. Menganalisis senyawa kimia yang dihasilkan oleh tanaman" },
+                        { text: "C. Investigating soil nutrients", text_id: "C. Menyelidiki nutrisi tanah" },
+                        { text: "D. Examining synthetic fertilizers", text_id: "D. Memeriksa pupuk sintetis" }
+                    ],
+                    correct: "B. Analyzing chemicals produced by plants",
+                    correct_id: "B. Menganalisis senyawa kimia yang dihasilkan oleh tanaman"
+                },
+                {
+                    question: "Which is an example of a secondary plant metabolite and its role?",
+                    question_id: "Mana yang merupakan contoh metabolit sekunder tanaman dan perannya?",
+                    options: [
+                        { text: "A. Glucose, used for energy production", text_id: "A. Glukosa, digunakan untuk produksi energi" },
+                        { text: "B. Alkaloids, used for defense against pests", text_id: "B. Alkaloid, digunakan untuk pertahanan terhadap hama" },
+                        { text: "C. Amino acids, used for photosynthesis", text_id: "C. Asam amino, digunakan untuk fotosintesis" },
+                        { text: "D. Starch, used for attracting pollinators", text_id: "D. Pati, digunakan untuk menarik penyerbuk" }
+                    ],
+                    correct: "B. Alkaloids, used for defense against pests",
+                    correct_id: "B. Alkaloid, digunakan untuk pertahanan terhadap hama"
+                },
+                {
+                    question: "Which plant-derived product is commonly used as a medicine?",
+                    question_id: "Produk yang berasal dari tanaman mana yang umum digunakan sebagai obat?",
+                    options: [
+                        { text: "A. Sucrose from sugarcane", text_id: "A. Sukrosa dari tebu" },
+                        { text: "B. Aspirin from willow bark", text_id: "B. Aspirin dari kulit pohon willow" },
+                        { text: "C. Cellulose from cotton", text_id: "C. Selulosa dari kapas" },
+                        { text: "D. Fructose from fruits", text_id: "D. Fruktosa dari buah-buahan" }
+                    ],
+                    correct: "B. Aspirin from willow bark",
+                    correct_id: "B. Aspirin dari kulit pohon willow"
+                },
+                {
+                    question: "What is a common tool in phytochemical analysis?",
+                    question_id: "Apa alat umum yang digunakan dalam analisis fitokimia?",
+                    options: [
+                        { text: "A. Microscope", text_id: "A. Mikroskop" },
+                        { text: "B. Chromatography", text_id: "B. Kromatografi" },
+                        { text: "C. Thermometer", text_id: "C. Termometer" },
+                        { text: "D. Ruler", text_id: "D. Penggaris" }
+                    ],
+                    correct: "B. Chromatography",
+                    correct_id: "B. Kromatografi"
+                },
+                {
+                    question: "How does phytochemistry connect with pharmacology?",
+                    question_id: "Bagaimana fitokimia terhubung dengan farmakologi?",
+                    options: [
+                        { text: "A. It studies plant growth patterns", text_id: "A. Mempelajari pola pertumbuhan tanaman" },
+                        { text: "B. It provides compounds for drug development", text_id: "B. Menyediakan senyawa untuk pengembangan obat" },
+                        { text: "C. It focuses on soil chemistry", text_id: "C. Berfokus pada kimia tanah" },
+                        { text: "D. It analyzes weather impacts on plants", text_id: "D. Menganalisis dampak cuaca pada tanaman" }
+                    ],
+                    correct: "B. It provides compounds for drug development",
+                    correct_id: "B. Menyediakan senyawa untuk pengembangan obat"
+                }
+            ],
+            currentQuestionIndex: 0,
+            score: 0
+        };
+
+        const quiz5Data = {
+            pairs: [
+                { term: 'Pharmacology', term_id: 'Farmakologi', definition: 'Studies the biological effects and mechanisms of action of plant compounds.', definition_id: 'Mempelajari efek biologis dan mekanisme aksi senyawa tanaman.', matched: false },
+                { term: 'Botany', term_id: 'Botani', definition: 'Helps in the identification, classification, and cultivation of medicinal plants.', definition_id: 'Membantu dalam identifikasi, klasifikasi, dan budidaya tanaman obat.', matched: false },
+                { term: 'Food Science', term_id: 'Ilmu Pangan', definition: 'Uses plant compounds as natural preservatives, colorants, and functional ingredients (nutraceuticals).', definition_id: 'Menggunakan senyawa tanaman sebagai pengawet alami, pewarna, dan bahan fungsional (nutraseutikal).', matched: false },
+                { term: 'Drug Discovery', term_id: 'Penemuan Obat', definition: 'Identifies novel plant-derived molecules that can serve as leads for new medicines.', definition_id: 'Mengidentifikasi molekul baru yang berasal dari tanaman untuk menjadi dasar obat baru.', matched: false }
+            ],
+            selectedTerm: null,
+            selectedDef: null,
+            score: 0
+        };
+
+        function showQuiz(quizNumber) {
+            currentQuiz = quizNumber;
+            document.querySelectorAll('.quiz-container').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active');
+            });
+            const activeQuiz = document.getElementById(`quiz${quizNumber}`);
+            activeQuiz.classList.remove('hidden');
+            setTimeout(() => activeQuiz.classList.add('active'), 50);
+
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active', 'text-emerald-600', 'border-emerald-600'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.add('text-gray-500', 'border-transparent'));
+            const activeTab = document.getElementById(`tab${quizNumber}`);
+            activeTab.classList.add('active', 'text-emerald-600', 'border-emerald-600');
+            activeTab.classList.remove('text-gray-500', 'border-transparent');
+
+            updateQuizContent();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = ['#10b981', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 3)];
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 2000);
+            }
+        }
+
+        function resetAllQuizzes() {
+            initQuiz1();
+            initQuiz2();
+            initQuiz3();
+            initQuiz4();
+            initQuiz5();
+            showQuiz(1);
+        }
+
+        function toggleLanguage() {
+            const selectElement = document.querySelector('.goog-te-combo');
+            const toggleButton = document.getElementById('language-toggle');
+            if (currentLanguage === 'en') {
+                currentLanguage = 'id';
+                toggleButton.textContent = 'Switch to English';
+                if (selectElement) {
+                    selectElement.value = 'id';
+                    selectElement.dispatchEvent(new Event('change'));
+                }
+            } else {
+                currentLanguage = 'en';
+                toggleButton.textContent = 'Switch to Bahasa Indonesia';
+                if (selectElement) {
+                    selectElement.value = 'en';
+                    selectElement.dispatchEvent(new Event('change'));
+                }
+            }
+            updateQuizContent();
+        }
+
+        function updateQuizContent() {
+            quiz1Data.items.forEach(item => {
+                const element = document.getElementById(item.id);
+                if (element) {
+                    element.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                }
+            });
+
+            const plantsContainer = document.getElementById('q2-plants');
+            const productsContainer = document.getElementById('q2-products');
+            if (plantsContainer && productsContainer) {
+                plantsContainer.innerHTML = '';
+                productsContainer.innerHTML = '';
+                const shuffledPlants = [...quiz2Data.pairs];
+                shuffleArray(shuffledPlants);
+                const shuffledProducts = [...quiz2Data.pairs];
+                shuffleArray(shuffledProducts);
+
+                shuffledPlants.forEach(pair => {
+                    const btn = document.createElement('button');
+                    btn.textContent = currentLanguage === 'en' ? pair.plant : pair.plant_id;
+                    btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                    btn.onclick = () => selectCard('plant', btn, pair.plant);
+                    plantsContainer.appendChild(btn);
+                });
+
+                shuffledProducts.forEach(pair => {
+                    const btn = document.createElement('button');
+                    btn.textContent = currentLanguage === 'en' ? pair.product : pair.product_id;
+                    btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                    btn.onclick = () => selectCard('product', btn, pair.product);
+                    productsContainer.appendChild(btn);
+                });
+            }
+
+            initQuiz3();
+
+            loadQuiz4Question();
+
+            const termsContainer = document.getElementById('q5-terms');
+            const defsContainer = document.getElementById('q5-defs');
+            if (termsContainer && defsContainer) {
+                termsContainer.innerHTML = '';
+                defsContainer.innerHTML = '';
+                const shuffledTerms = [...quiz5Data.pairs];
+                shuffleArray(shuffledTerms);
+                const shuffledDefs = [...quiz5Data.pairs];
+                shuffleArray(shuffledDefs);
+
+                shuffledTerms.forEach(pair => {
+                    const btn = document.createElement('button');
+                    btn.textContent = currentLanguage === 'en' ? pair.term : pair.term_id;
+                    btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                    btn.onclick = () => selectConnection('term', btn, pair.term);
+                    termsContainer.appendChild(btn);
+                });
+
+                shuffledDefs.forEach(pair => {
+                    const btn = document.createElement('button');
+                    btn.textContent = currentLanguage === 'en' ? pair.definition : pair.definition_id;
+                    btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                    btn.onclick = () => selectConnection('definition', btn, pair.definition);
+                    defsContainer.appendChild(btn);
+                });
+            }
+        }
+
+        function initQuiz1() {
+            quiz1Data.score = 0;
+            const itemsContainer = document.getElementById('q1-items');
+            itemsContainer.innerHTML = '';
+            document.querySelectorAll('#quiz1 .drop-zone').forEach(zone => {
+                while (zone.children.length > 2) {
+                    zone.removeChild(zone.lastChild);
+                }
+            });
+            document.getElementById('q1-feedback').textContent = '';
+
+            const shuffledItems = [...quiz1Data.items];
+            shuffleArray(shuffledItems);
+
+            shuffledItems.forEach(item => {
+                const div = document.createElement('div');
+                div.id = item.id;
+                div.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                div.className = 'draggable bg-blue-100 text-blue-800 py-2 px-4 rounded-full cursor-grab active:cursor-grabbing shadow-sm';
+                div.draggable = true;
+                itemsContainer.appendChild(div);
+            });
+
+            addDragListeners();
+        }
+
+        function addDragListeners() {
+            document.querySelectorAll('.draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart);
+            });
+
+            document.querySelectorAll('.drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver);
+                zone.addEventListener('dragleave', handleDragLeave);
+                zone.addEventListener('drop', handleDrop);
+            });
+        }
+
+        function handleDragStart(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (draggableElement && !dropZone.contains(draggableElement)) {
+                if (draggableElement.parentNode.id === 'q1-items' || draggableElement.parentNode.id === 'q3-source') {
+                    dropZone.appendChild(draggableElement);
+                } else {
+                    const originalParent = draggableElement.parentNode;
+                    originalParent.removeChild(draggableElement);
+                    dropZone.appendChild(draggableElement);
+                }
+                if (dropZone.id === 'q3-target') {
+                    updateOrderedNumbers();
+                }
+                draggableElement.classList.add('feedback-correct');
+                setTimeout(() => draggableElement.classList.remove('feedback-correct'), 500);
+            }
+            if (currentQuiz === 1) checkQuiz1Completion();
+        }
+
+        function checkQuiz1Completion() {
+            const itemsContainer = document.getElementById('q1-items');
+            if (itemsContainer.children.length === 0) {
+                let correctCount = 0;
+                quiz1Data.items.forEach(item => {
+                    const element = document.getElementById(item.id);
+                    const parentCategory = element.parentElement.dataset.category;
+                    if (parentCategory === item.category) {
+                        correctCount++;
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-green-100', 'text-green-800', 'feedback-correct');
+                    } else {
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-red-100', 'text-red-800', 'feedback-incorrect');
+                    }
+                });
+                quiz1Data.score = correctCount;
+                const feedbackEl = document.getElementById('q1-feedback');
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `You correctly sorted ${quiz1Data.score} out of ${quiz1Data.items.length} items!`
+                    : `Anda mengurutkan ${quiz1Data.score} dari ${quiz1Data.items.length} item dengan benar!`;
+                feedbackEl.className = quiz1Data.score === quiz1Data.items.length ? 'mt-6 text-center font-medium text-green-600' : 'mt-6 text-center font-medium text-red-600';
+                if (quiz1Data.score === quiz1Data.items.length) createConfetti();
+            }
+        }
+
+        function initQuiz2() {
+            quiz2Data.score = 0;
+            quiz2Data.selectedPlant = null;
+            quiz2Data.selectedProduct = null;
+            document.getElementById('q2-feedback').textContent = '';
+
+            const grid = document.getElementById('q2-grid');
+            grid.innerHTML = `
+                <div>
+                    <h3 class="font-semibold text-center mb-2">${currentLanguage === 'en' ? 'Plants' : 'Tanaman'}</h3>
+                    <div id="q2-plants" class="space-y-2"></div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-center mb-2">${currentLanguage === 'en' ? 'Products/Medicines' : 'Produk/Obat'}</h3>
+                    <div id="q2-products" class="space-y-2"></div>
+                </div>
+            `;
+
+            const plantsContainer = document.getElementById('q2-plants');
+            const shuffledPlants = [...quiz2Data.pairs];
+            shuffleArray(shuffledPlants);
+            shuffledPlants.forEach(pair => {
+                const btn = document.createElement('button');
+                btn.textContent = currentLanguage === 'en' ? pair.plant : pair.plant_id;
+                btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                btn.onclick = () => selectCard('plant', btn, pair.plant);
+                plantsContainer.appendChild(btn);
+            });
+
+            const productsContainer = document.getElementById('q2-products');
+            const shuffledProducts = [...quiz2Data.pairs];
+            shuffleArray(shuffledProducts);
+            shuffledProducts.forEach(pair => {
+                const btn = document.createElement('button');
+                btn.textContent = currentLanguage === 'en' ? pair.product : pair.product_id;
+                btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                btn.onclick = () => selectCard('product', btn, pair.product);
+                productsContainer.appendChild(btn);
+            });
+        }
+
+        function selectCard(type, element, value) {
+            const containerId = type === 'plant' ? 'q2-plants' : 'q2-products';
+            document.querySelectorAll(`#${containerId} button`).forEach(btn => btn.classList.remove('bg-blue-200', 'border-blue-400'));
+            element.classList.add('bg-blue-200', 'border-blue-400');
+
+            if (type === 'plant') {
+                quiz2Data.selectedPlant = { element, value };
+            } else {
+                quiz2Data.selectedProduct = { element, value };
+            }
+
+            if (quiz2Data.selectedPlant && quiz2Data.selectedProduct) {
+                checkMatch();
+            }
+        }
+
+        function checkMatch() {
+            const plantValue = quiz2Data.selectedPlant.value;
+            const productValue = quiz2Data.selectedProduct.value;
+            const correctPair = quiz2Data.pairs.find(p => p.plant === plantValue);
+            const feedbackEl = document.getElementById('q2-feedback');
+
+            if (correctPair && correctPair.product === productValue) {
+                quiz2Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct Match!' : 'Pencocokan Benar!';
+                feedbackEl.className = 'mt-6 text-center font-medium text-green-600';
+                quiz2Data.selectedPlant.element.disabled = true;
+                quiz2Data.selectedProduct.element.disabled = true;
+                quiz2Data.selectedPlant.element.classList.add('bg-green-200', 'border-green-400', 'opacity-50', 'cursor-not-allowed');
+                quiz2Data.selectedProduct.element.classList.add('bg-green-200', 'border-green-400', 'opacity-50', 'cursor-not-allowed');
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Incorrect. Try again!' : 'Salah. Coba lagi!';
+                feedbackEl.className = 'mt-6 text-center font-medium text-red-600';
+                quiz2Data.selectedPlant.element.classList.add('feedback-incorrect');
+                quiz2Data.selectedProduct.element.classList.add('feedback-incorrect');
+                setTimeout(() => {
+                    quiz2Data.selectedPlant.element.classList.remove('feedback-incorrect');
+                    quiz2Data.selectedProduct.element.classList.remove('feedback-incorrect');
+                }, 500);
+            }
+
+            quiz2Data.selectedPlant = null;
+            quiz2Data.selectedProduct = null;
+            setTimeout(() => {
+                document.querySelectorAll('#q2-grid button').forEach(btn => btn.classList.remove('bg-blue-200', 'border-blue-400'));
+            }, 500);
+
+            if (quiz2Data.score === quiz2Data.pairs.length) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Congratulations! You matched all pairs correctly!'
+                    : 'Selamat! Anda mencocokkan semua pasangan dengan benar!';
+                createConfetti();
+            }
+        }
+
+        function initQuiz3() {
+            document.getElementById('q3-feedback').textContent = '';
+            const sourceContainer = document.getElementById('q3-source');
+            const targetContainer = document.getElementById('q3-target');
+            sourceContainer.innerHTML = '';
+            targetContainer.innerHTML = '';
+
+            const shuffledSteps = [...quiz3Data.steps];
+            shuffleArray(shuffledSteps);
+
+            shuffledSteps.forEach(step => {
+                const div = document.createElement('div');
+                div.id = step.id;
+                div.dataset.baseText = currentLanguage === 'en' ? step.text : step.text_id;
+                div.textContent = div.dataset.baseText; // Display without number in source
+                div.dataset.order = step.order;
+                div.className = 'draggable bg-blue-100 text-blue-800 p-3 rounded-md cursor-grab active:cursor-grabbing shadow-sm text-center';
+                div.draggable = true;
+                sourceContainer.appendChild(div);
+            });
+
+            sourceContainer.addEventListener('dragstart', handleDragStart);
+            targetContainer.addEventListener('dragstart', handleDragStart);
+            targetContainer.addEventListener('dragover', handleDragOver);
+            targetContainer.addEventListener('dragleave', handleDragLeave);
+            targetContainer.addEventListener('drop', handleDropSequencer);
+        }
+
+        function handleDropSequencer(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (draggableElement) {
+                dropZone.appendChild(draggableElement);
+                updateOrderedNumbers();
+            }
+        }
+
+        function updateOrderedNumbers() {
+            const targetContainer = document.getElementById('q3-target');
+            const items = Array.from(targetContainer.children);
+            items.forEach((item, index) => {
+                const baseText = item.dataset.baseText;
+                item.textContent = `${index + 1}. ${baseText}`;
+            });
+
+            const sourceContainer = document.getElementById('q3-source');
+            Array.from(sourceContainer.children).forEach(item => {
+                item.textContent = item.dataset.baseText; // Ensure source items remain without numbers
+            });
+        }
+
+        function checkSequence() {
+            const targetContainer = document.getElementById('q3-target');
+            const placedItems = Array.from(targetContainer.children);
+            const feedbackEl = document.getElementById('q3-feedback');
+
+            if (placedItems.length < quiz3Data.steps.length) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Please drag all steps into the workflow box.'
+                    : 'Harap seret semua langkah ke kotak alur kerja.';
+                feedbackEl.className = 'mt-6 text-center font-medium text-orange-600';
+                return;
+            }
+
+            let isCorrect = true;
+            placedItems.forEach((item, index) => {
+                if (parseInt(item.dataset.order) !== (index + 1)) {
+                    isCorrect = false;
+                    item.classList.remove('bg-blue-100', 'text-blue-800');
+                    item.classList.add('bg-red-100', 'text-red-800', 'feedback-incorrect');
+                } else {
+                    item.classList.remove('bg-blue-100', 'text-blue-800');
+                    item.classList.add('bg-green-100', 'text-green-800', 'feedback-correct');
+                }
+            });
+
+            if (isCorrect) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Excellent! The workflow is in the correct order.'
+                    : 'Luar biasa! Alur kerja sudah dalam urutan yang benar.';
+                feedbackEl.className = 'mt-6 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Not quite right. The steps in red are in the wrong position.'
+                    : 'Belum sepenuhnya benar. Langkah-langkah berwarna merah berada di posisi yang salah.';
+                feedbackEl.className = 'mt-6 text-center font-medium text-red-600';
+            }
+        }
+
+        function initQuiz4() {
+            quiz4Data.currentQuestionIndex = 0;
+            quiz4Data.score = 0;
+            document.getElementById('q4-feedback').textContent = '';
+            loadQuiz4Question();
+        }
+
+        function loadQuiz4Question() {
+            const questionArea = document.getElementById('q4-question-area');
+            const feedbackEl = document.getElementById('q4-feedback');
+            feedbackEl.textContent = '';
+
+            if (quiz4Data.currentQuestionIndex < quiz4Data.questions.length) {
+                const q = quiz4Data.questions[quiz4Data.currentQuestionIndex];
+                let optionsHTML = '';
+                shuffleArray(q.options);
+                q.options.forEach(option => {
+                    optionsHTML += `
+                        <label class="option-label block text-left p-3 mb-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                            <input type="radio" name="q4-option" value="${currentLanguage === 'en' ? option.text : option.text_id}" class="mr-2">
+                            ${currentLanguage === 'en' ? option.text : option.text_id}
+                        </label>
+                    `;
+                });
+
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-lg mb-4">${quiz4Data.currentQuestionIndex + 1}. ${currentLanguage === 'en' ? q.question : q.question_id}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                `;
+            } else {
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-xl mb-4">${currentLanguage === 'en' ? 'Quiz Completed!' : 'Kuis Selesai!'}</h3>
+                    <p class="text-lg">${currentLanguage === 'en' 
+                        ? `You scored ${quiz4Data.score} out of ${quiz4Data.questions.length} questions correctly.` 
+                        : `Anda mencetak ${quiz4Data.score} dari ${quiz4Data.questions.length} pertanyaan dengan benar.`}</p>
+                    <button onclick="initQuiz4()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition">${currentLanguage === 'en' ? 'Restart Quiz 4' : 'Ulangi Kuis 4'}</button>
+                `;
+                document.querySelector('#quiz4 button').style.display = 'none';
+            }
+        }
+
+        function submitQuiz4Answer() {
+            const selectedOption = document.querySelector('input[name="q4-option"]:checked');
+            const feedbackEl = document.getElementById('q4-feedback');
+
+            if (!selectedOption) {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Please select an answer!' : 'Harap pilih jawaban!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-orange-600';
+                return;
+            }
+
+            const userAnswer = selectedOption.value;
+            const currentQ = quiz4Data.questions[quiz4Data.currentQuestionIndex];
+
+            document.querySelectorAll('input[name="q4-option"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                    label.classList.add('bg-green-200', 'border-green-400', 'feedback-correct');
+                } else if (input.checked) {
+                    label.classList.add('bg-red-200', 'border-red-400', 'feedback-incorrect');
+                }
+                input.disabled = true;
+            });
+
+            if (userAnswer === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                quiz4Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct!' : 'Benar!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `Incorrect. The correct answer was: ${currentQ.correct}` 
+                    : `Salah. Jawaban yang benar adalah: ${currentQ.correct_id}`;
+                feedbackEl.className = 'mt-4 text-center font-medium text-red-600';
+            }
+
+            setTimeout(() => {
+                quiz4Data.currentQuestionIndex++;
+                loadQuiz4Question();
+            }, 1500);
+        }
+
+        function initQuiz5() {
+            quiz5Data.score = 0;
+            quiz5Data.selectedTerm = null;
+            quiz5Data.selectedDef = null;
+            document.getElementById('q5-feedback').textContent = '';
+
+            const grid = document.getElementById('q5-grid');
+            grid.innerHTML = `
+                <div>
+                    <h3 class="font-semibold text-center mb-2">${currentLanguage === 'en' ? 'Scientific Field / Application' : 'Bidang Ilmu / Aplikasi'}</h3>
+                    <div id="q5-terms" class="space-y-2"></div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-center mb-2">${currentLanguage === 'en' ? 'Connection to Phytochemistry' : 'Hubungan dengan Fitokimia'}</h3>
+                    <div id="q5-defs" class="space-y-2"></div>
+                </div>
+            `;
+
+            const termsContainer = document.getElementById('q5-terms');
+            const shuffledTerms = [...quiz5Data.pairs];
+            shuffleArray(shuffledTerms);
+            shuffledTerms.forEach(pair => {
+                const btn = document.createElement('button');
+                btn.textContent = currentLanguage === 'en' ? pair.term : pair.term_id;
+                btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                btn.onclick = () => selectConnection('term', btn, pair.term);
+                termsContainer.appendChild(btn);
+            });
+
+            const defsContainer = document.getElementById('q5-defs');
+            const shuffledDefs = [...quiz5Data.pairs];
+            shuffleArray(shuffledDefs);
+            shuffledDefs.forEach(pair => {
+                const btn = document.createElement('button');
+                btn.textContent = currentLanguage === 'en' ? pair.definition : pair.definition_id;
+                btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                btn.onclick = () => selectConnection('definition', btn, pair.definition);
+                defsContainer.appendChild(btn);
+            });
+        }
+
+        function selectConnection(type, element, value) {
+            const containerId = type === 'term' ? 'q5-terms' : 'q5-defs';
+            document.querySelectorAll(`#${containerId} button`).forEach(btn => btn.classList.remove('bg-blue-200', 'border-blue-400'));
+            element.classList.add('bg-blue-200', 'border-blue-400');
+
+            if (type === 'term') {
+                quiz5Data.selectedTerm = { element, value };
+            } else {
+                quiz5Data.selectedDef = { element, value };
+            }
+
+            if (quiz5Data.selectedTerm && quiz5Data.selectedDef) {
+                checkConnectionMatch();
+            }
+        }
+
+        function checkConnectionMatch() {
+            const termValue = quiz5Data.selectedTerm.value;
+            const defValue = quiz5Data.selectedDef.value;
+            const correctPair = quiz5Data.pairs.find(p => p.term === termValue);
+            const feedbackEl = document.getElementById('q5-feedback');
+
+            if (correctPair && correctPair.definition === defValue) {
+                quiz5Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct Connection!' : 'Koneksi Benar!';
+                feedbackEl.className = 'mt-6 text-center font-medium text-green-600';
+                quiz5Data.selectedTerm.element.disabled = true;
+                quiz5Data.selectedDef.element.disabled = true;
+                quiz5Data.selectedTerm.element.classList.add('bg-green-200', 'border-green-400', 'opacity-50', 'cursor-not-allowed');
+                quiz5Data.selectedDef.element.classList.add('bg-green-200', 'border-green-400', 'opacity-50', 'cursor-not-allowed');
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Incorrect. Try again!' : 'Salah. Coba lagi!';
+                feedbackEl.className = 'mt-6 text-center font-medium text-red-600';
+                quiz5Data.selectedTerm.element.classList.add('feedback-incorrect');
+                quiz5Data.selectedDef.element.classList.add('feedback-incorrect');
+                setTimeout(() => {
+                    quiz5Data.selectedTerm.element.classList.remove('feedback-incorrect');
+                    quiz5Data.selectedDef.element.classList.remove('feedback-incorrect');
+                }, 500);
+            }
+
+            quiz5Data.selectedTerm = null;
+            quiz5Data.selectedDef = null;
+            setTimeout(() => {
+                document.querySelectorAll('#q5-grid button').forEach(btn => btn.classList.remove('bg-blue-200', 'border-blue-400'));
+            }, 500);
+
+            if (quiz5Data.score === quiz5Data.pairs.length) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Congratulations! You\'ve mapped all the connections correctly!'
+                    : 'Selamat! Anda telah memetakan semua koneksi dengan benar!';
+                createConfetti();
+            }
+        }
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,id',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+
+        window.onload = function() {
+            initQuiz1();
+            initQuiz2();
+            initQuiz3();
+            initQuiz4();
+            initQuiz5();
+            showQuiz(1);
+        };
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
+

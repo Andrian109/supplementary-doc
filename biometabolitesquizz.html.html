@@ -1,0 +1,930 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plant Secondary Metabolites Adventure</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-image: url('https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        .quiz-container {
+            transition: transform 0.3s ease-out, opacity 0.3s ease-out;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+
+        .quiz-container.active {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .draggable {
+            touch-action: none;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .draggable:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .drop-zone {
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+
+        .drop-zone.drag-over {
+            background-color: #d1fae5;
+            border-color: #10b981;
+            transform: scale(1.02);
+        }
+
+        .feedback-correct {
+            animation: flash-green 0.5s ease;
+        }
+
+        .feedback-incorrect {
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes flash-green {
+            0% { background-color: #fff; }
+            50% { background-color: #a7f3d0; }
+            100% { background-color: #fff; }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        @keyframes confetti {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        }
+
+        .confetti {
+            position: fixed;
+            width: 10px;
+            height: 10px;
+            background-color: #10b981;
+            animation: confetti 2s ease-out forwards;
+        }
+
+        .tab-button {
+            transition: background-color 0.3s, color 0.3s, border-color 0.3s, transform 0.2s;
+        }
+
+        .tab-button.active {
+            background-color: #059669;
+            color: white;
+            border-color: #059669;
+            transform: scale(1.05);
+        }
+
+        .tab-button:hover {
+            transform: scale(1.05);
+        }
+
+        .option-label {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        .option-label:hover {
+            transform: scale(1.02);
+        }
+
+        #language-toggle {
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #language-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        #google_translate_element {
+            display: none;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50 text-gray-800">
+    <div class="max-w-4xl mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-emerald-700 mb-2 animate-pulse">Plant Secondary Metabolites Adventure</h1>
+            <p class="text-lg text-gray-600">Explore Classification, Biosynthesis, and Functions with Interactive Quizzes!</p>
+            <button id="language-toggle" onclick="toggleLanguage()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-600 transition shadow-md">
+                Switch to Bahasa Indonesia
+            </button>
+            <div id="google_translate_element"></div>
+        </header>
+
+        <div class="mb-8 border-b border-gray-200">
+            <nav class="flex flex-wrap -mb-px justify-center" aria-label="Tabs">
+                <button onclick="showQuiz(1)" id="tab1" class="tab-button active text-emerald-600 border-b-2 border-emerald-600 whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 focus:outline-none">
+                    <i class="fas fa-leaf mr-2"></i>Definition & Significance
+                </button>
+                <button onclick="showQuiz(2)" id="tab2" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-seedling mr-2"></i>Classification Challenge
+                </button>
+                <button onclick="showQuiz(3)" id="tab3" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-atom mr-2"></i>Structural Features
+                </button>
+                <button onclick="showQuiz(4)" id="tab4" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-dna mr-2"></i>Biosynthesis Pathway
+                </button>
+                <button onclick="showQuiz(5)" id="tab5" class="tab-button text-gray-500 border-b-2 border-transparent whitespace-nowrap py-4 px-6 bg-transparent text-sm font-medium text-center hover:bg-emerald-50 hover:text-emerald-700 focus:outline-none">
+                    <i class="fas fa-globe mr-2"></i>Roles & Influences
+                </button>
+            </nav>
+        </div>
+
+        <main>
+            <div id="quiz1" class="quiz-container active">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 1: Definition & Significance</h2>
+                    <p class="text-gray-600 mb-6">Test your understanding of secondary metabolites and their importance.</p>
+                    <div id="q1-question-area" class="text-center p-4 bg-gray-100 rounded-md min-h-[150px]"></div>
+                    <div class="text-center mt-6">
+                        <button onclick="submitQuiz1Answer()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Submit Answer</button>
+                    </div>
+                    <div id="q1-feedback" class="mt-4 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz2" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 2: Classification Challenge</h2>
+                    <p class="text-gray-600 mb-6">Drag each compound or Indonesian plant example to its correct secondary metabolite class.</p>
+                    <div class="mb-6">
+                        <h3 class="font-medium text-center mb-2">Items to Classify:</h3>
+                        <div id="q2-items" class="flex flex-wrap gap-3 justify-center bg-gray-100 p-4 rounded-md"></div>
+                    </div>
+                    <div class="grid md:grid-cols-3 gap-6">
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="phenolics">
+                            <h3 class="font-bold text-lg text-center text-purple-600">Phenolics</h3>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="alkaloids">
+                            <h3 class="font-bold text-lg text-center text-orange-600">Alkaloids</h3>
+                        </div>
+                        <div class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[120px] bg-gray-50" data-category="terpenoids">
+                            <h3 class="font-bold text-lg text-center text-teal-600">Terpenoids</h3>
+                        </div>
+                    </div>
+                    <div id="q2-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz3" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 3: Structural Features</h2>
+                    <p class="text-gray-600 mb-6">Match the structural description to the correct secondary metabolite class.</p>
+                    <div id="q3-grid" class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4"></div>
+                    <div id="q3-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz4" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 4: Biosynthesis Pathway</h2>
+                    <p class="text-gray-600 mb-6">Arrange the steps of the terpenoid biosynthesis pathway in the correct order.</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="font-medium text-center mb-2">Unordered Steps:</h3>
+                            <div id="q4-source" class="space-y-3 p-4 bg-gray-100 rounded-md min-h-[200px]"></div>
+                        </div>
+                        <div>
+                            <h3 class="font-medium text-center mb-2">Your Ordered Pathway:</h3>
+                            <div id="q4-target" class="drop-zone border-2 border-dashed border-gray-300 p-4 rounded-lg min-h-[200px] space-y-3 bg-gray-50"></div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button onclick="checkSequence4()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Check Order</button>
+                    </div>
+                    <div id="q4-feedback" class="mt-6 text-center font-medium"></div>
+                </div>
+            </div>
+
+            <div id="quiz5" class="quiz-container hidden">
+                <div class="bg-white p-6 rounded-lg shadow-md">
+                    <h2 class="text-2xl font-semibold mb-1">Quiz 5: Roles & Influences</h2>
+                    <p class="text-gray-600 mb-6">Read the scenario and choose the best answer about the roles of secondary metabolites.</p>
+                    <div id="q5-question-area" class="text-center p-4 bg-gray-100 rounded-md min-h-[150px]"></div>
+                    <div class="text-center mt-6">
+                        <button onclick="submitQuiz5Answer()" class="bg-emerald-600 text-white font-semibold py-2 px-6 rounded-lg hover:bg-emerald-700 transition">Submit Answer</button>
+                    </div>
+                    <div id="q5-feedback" class="mt-4 text-center font-medium"></div>
+                </div>
+            </div>
+        </main>
+
+        <div class="text-center mt-10">
+            <button onclick="resetAllQuizzes()" class="bg-gray-200 text-gray-700 font-semibold py-2 px-5 rounded-lg hover:bg-gray-300 transition">
+                <i class="fas fa-redo mr-2"></i>Reset All Quizzes
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let currentQuiz = 1;
+        let currentLanguage = 'en';
+
+        const quiz1Data = {
+            questions: [
+                {
+                    question: "What distinguishes secondary metabolites from primary metabolites in plants?",
+                    question_id: "Apa yang membedakan metabolit sekunder dari metabolit primer pada tanaman?",
+                    options: [
+                        { text: "A. Essential for growth and reproduction", text_id: "A. Penting untuk pertumbuhan dan reproduksi" },
+                        { text: "B. Involved in photosynthesis", text_id: "B. Terlibat dalam fotosintesis" },
+                        { text: "C. Not essential for basic survival but crucial for defense and adaptation", text_id: "C. Tidak penting untuk kelangsungan hidup dasar tetapi krusial untuk pertahanan dan adaptasi" },
+                        { text: "D. Exclusive to animal cells", text_id: "D. Eksklusif untuk sel hewan" }
+                    ],
+                    correct: "C. Not essential for basic survival but crucial for defense and adaptation",
+                    correct_id: "C. Tidak penting untuk kelangsungan hidup dasar tetapi krusial untuk pertahanan dan adaptasi"
+                },
+                {
+                    question: "Why are secondary metabolites significant for human applications, such as in Indonesia?",
+                    question_id: "Mengapa metabolit sekunder penting untuk aplikasi manusia, seperti di Indonesia?",
+                    options: [
+                        { text: "A. They build plant proteins", text_id: "A. Mereka membangun protein tanaman" },
+                        { text: "B. They are primary energy sources", text_id: "B. Mereka adalah sumber energi utama" },
+                        { text: "C. They provide compounds for medicines, like quinine from cinchona", text_id: "C. Mereka menyediakan senyawa untuk obat, seperti kinin dari kina" },
+                        { text: "D. They enhance water absorption", text_id: "D. Mereka meningkatkan penyerapan air" }
+                    ],
+                    correct: "C. They provide compounds for medicines, like quinine from cinchona",
+                    correct_id: "C. Mereka menyediakan senyawa untuk obat, seperti kinin dari kina"
+                }
+            ],
+            currentQuestionIndex: 0,
+            score: 0
+        };
+
+        const quiz2Data = {
+            items: [
+                { id: 'q2-item1', text: 'Curcumin (from Turmeric, Curcuma longa)', text_id: 'Kurkumin (dari Kunyit, Curcuma longa)', category: 'phenolics' },
+                { id: 'q2-item2', text: 'Quinine (from Cinchona, Cinchona sp.)', text_id: 'Kinin (dari Kina, Cinchona sp.)', category: 'alkaloids' },
+                { id: 'q2-item3', text: 'Eugenol (from Clove, Syzygium aromaticum)', text_id: 'Eugenol (dari Cengkeh, Syzygium aromaticum)', category: 'phenolics' },
+                { id: 'q2-item4', text: 'Menthol (from Peppermint, Mentha piperita)', text_id: 'Mentol (dari Peppermint, Mentha piperita)', category: 'terpenoids' },
+                { id: 'q2-item5', text: 'Caffeine (from Coffee, Coffea arabica)', text_id: 'Kafein (dari Kopi, Coffea arabica)', category: 'alkaloids' },
+                { id: 'q2-item6', text: 'Artemisinin (from Sweet Wormwood, Artemisia annua)', text_id: 'Artemisinin (dari Wormwood Manis, Artemisia annua)', category: 'terpenoids' },
+                { id: 'q2-item7', text: 'Quercetin (from Gynura procumbens)', text_id: 'Kuersetin (dari Gynura procumbens)', category: 'phenolics' },
+                { id: 'q2-item8', text: 'Tannins (from Tea, Camellia sinensis)', text_id: 'Tanin (dari Teh, Camellia sinensis)', category: 'phenolics' }
+            ],
+            score: 0
+        };
+
+        const quiz3Data = {
+            pairs: [
+                { term: 'Phenolics', term_id: 'Fenolik', definition: 'Characterized by hydroxyl groups on an aromatic ring, e.g., eugenol in cloves.', definition_id: 'Ditandai dengan gugus hidroksil pada cincin aromatik, misalnya eugenol pada cengkeh.', matched: false },
+                { term: 'Alkaloids', term_id: 'Alkaloid', definition: 'Nitrogen-containing, often in heterocyclic rings, e.g., quinine in cinchona.', definition_id: 'Mengandung nitrogen, sering dalam cincin heterosiklik, misalnya kinin pada kina.', matched: false },
+                { term: 'Terpenoids', term_id: 'Terpenoid', definition: 'Derived from isoprene units (C5H8), often aromatic, e.g., menthol in peppermint.', definition_id: 'Berasal dari unit isoprena (C5H8), sering aromatik, misalnya mentol pada peppermint.', matched: false }
+            ],
+            selectedTerm: null,
+            selectedDef: null,
+            score: 0
+        };
+
+        const quiz4Data = {
+            steps: [
+                { id: 'q4-step1', text: 'Acetyl-CoA formation', text_id: 'Pembentukan Asetil-KoA', order: 1 },
+                { id: 'q4-step2', text: 'Mevalonate Pathway (MVA) or MEP Pathway', text_id: 'Jalur Mevalonat (MVA) atau Jalur MEP', order: 2 },
+                { id: 'q4-step3', text: 'Formation of IPP and DMAPP', text_id: 'Pembentukan IPP dan DMAPP', order: 3 },
+                { id: 'q4-step4', text: 'Condensation to form GPP, FPP, etc.', text_id: 'Kondensasi untuk membentuk GPP, FPP, dll.', order: 4 },
+                { id: 'q4-step5', text: 'Cyclization to specific terpenoids', text_id: 'Siklisasi ke terpenoid spesifik', order: 5 }
+            ]
+        };
+
+        const quiz5Data = {
+            questions: [
+                {
+                    question: "A clove plant produces eugenol when attacked by insects. What is the primary role of this compound?",
+                    question_id: "Tanaman cengkeh menghasilkan eugenol saat diserang serangga. Apa peran utama senyawa ini?",
+                    options: [
+                        { text: "A. Attracting pollinators", text_id: "A. Menarik penyerbuk" },
+                        { text: "B. Enhancing photosynthesis", text_id: "B. Meningkatkan fotosintesis" },
+                        { text: "C. Defense against herbivores", text_id: "C. Pertahanan terhadap herbivora" },
+                        { text: "D. Storing energy", text_id: "D. Menyimpan energi" }
+                    ],
+                    correct: "C. Defense against herbivores",
+                    correct_id: "C. Pertahanan terhadap herbivora"
+                },
+                {
+                    question: "How can elicitation increase secondary metabolite production in Indonesian turmeric plants?",
+                    question_id: "Bagaimana elisitasi dapat meningkatkan produksi metabolit sekunder pada tanaman kunyit Indonesia?",
+                    options: [
+                        { text: "A. Reducing light exposure", text_id: "A. Mengurangi paparan cahaya" },
+                        { text: "B. Applying stress agents to trigger defense responses", text_id: "B. Menerapkan agen stres untuk memicu respons pertahanan" },
+                        { text: "C. Increasing nitrogen fertilizer", text_id: "C. Meningkatkan pupuk nitrogen" },
+                        { text: "D. Decreasing water supply", text_id: "D. Mengurangi pasokan air" }
+                    ],
+                    correct: "B. Applying stress agents to trigger defense responses",
+                    correct_id: "B. Menerapkan agen stres untuk memicu respons pertahanan"
+                },
+                {
+                    question: "How do secondary metabolites like curcumin in turmeric contribute to ecological interactions?",
+                    question_id: "Bagaimana metabolit sekunder seperti kurkumin pada kunyit berkontribusi pada interaksi ekologi?",
+                    options: [
+                        { text: "A. Increasing root growth", text_id: "A. Meningkatkan pertumbuhan akar" },
+                        { text: "B. Acting as signaling molecules for microbes or pollinators", text_id: "B. Bertindak sebagai molekul sinyal untuk mikroba atau penyerbuk" },
+                        { text: "C. Converting sunlight to energy", text_id: "C. Mengubah sinar matahari menjadi energi" },
+                        { text: "D. Regulating plant temperature", text_id: "D. Mengatur suhu tanaman" }
+                    ],
+                    correct: "B. Acting as signaling molecules for microbes or pollinators",
+                    correct_id: "B. Bertindak sebagai molekul sinyal untuk mikroba atau penyerbuk"
+                }
+            ],
+            currentQuestionIndex: 0,
+            score: 0
+        };
+
+        function showQuiz(quizNumber) {
+            currentQuiz = quizNumber;
+            document.querySelectorAll('.quiz-container').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('active');
+            });
+            const activeQuiz = document.getElementById(`quiz${quizNumber}`);
+            activeQuiz.classList.remove('hidden');
+            setTimeout(() => activeQuiz.classList.add('active'), 50);
+
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active', 'text-emerald-600', 'border-emerald-600'));
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.add('text-gray-500', 'border-transparent'));
+            const activeTab = document.getElementById(`tab${quizNumber}`);
+            activeTab.classList.add('active', 'text-emerald-600', 'border-emerald-600');
+            activeTab.classList.remove('text-gray-500', 'border-transparent');
+
+            updateQuizContent();
+        }
+
+        function shuffleArray(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        function createConfetti() {
+            for (let i = 0; i < 50; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = `${Math.random() * 100}vw`;
+                confetti.style.backgroundColor = ['#10b981', '#f59e0b', '#ef4444'][Math.floor(Math.random() * 3)];
+                confetti.style.animationDelay = `${Math.random() * 2}s`;
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 2000);
+            }
+        }
+
+        function resetAllQuizzes() {
+            initQuiz1();
+            initQuiz2();
+            initQuiz3();
+            initQuiz4();
+            initQuiz5();
+            showQuiz(1);
+        }
+
+        function toggleLanguage() {
+            const selectElement = document.querySelector('.goog-te-combo');
+            const toggleButton = document.getElementById('language-toggle');
+            if (currentLanguage === 'en') {
+                currentLanguage = 'id';
+                toggleButton.textContent = 'Switch to English';
+                if (selectElement) {
+                    selectElement.value = 'id';
+                    selectElement.dispatchEvent(new Event('change'));
+                }
+            } else {
+                currentLanguage = 'en';
+                toggleButton.textContent = 'Switch to Bahasa Indonesia';
+                if (selectElement) {
+                    selectElement.value = 'en';
+                    selectElement.dispatchEvent(new Event('change'));
+                }
+            }
+            updateQuizContent();
+        }
+
+        function updateQuizContent() {
+            quiz1Data.questions.forEach((q, index) => {
+                if (index === quiz1Data.currentQuestionIndex) {
+                    loadQuiz1Question();
+                }
+            });
+
+            quiz2Data.items.forEach(item => {
+                const element = document.getElementById(item.id);
+                if (element) {
+                    element.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                }
+            });
+
+            initQuiz3();
+
+            initQuiz4();
+
+            quiz5Data.questions.forEach((q, index) => {
+                if (index === quiz5Data.currentQuestionIndex) {
+                    loadQuiz5Question();
+                }
+            });
+        }
+
+        function initQuiz1() {
+            quiz1Data.currentQuestionIndex = 0;
+            quiz1Data.score = 0;
+            document.getElementById('q1-feedback').textContent = '';
+            loadQuiz1Question();
+        }
+
+        function loadQuiz1Question() {
+            const questionArea = document.getElementById('q1-question-area');
+            const feedbackEl = document.getElementById('q1-feedback');
+            feedbackEl.textContent = '';
+
+            if (quiz1Data.currentQuestionIndex < quiz1Data.questions.length) {
+                const q = quiz1Data.questions[quiz1Data.currentQuestionIndex];
+                let optionsHTML = '';
+                shuffleArray(q.options);
+                q.options.forEach(option => {
+                    optionsHTML += `
+                        <label class="option-label block text-left p-3 mb-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                            <input type="radio" name="q1-option" value="${currentLanguage === 'en' ? option.text : option.text_id}" class="mr-2">
+                            ${currentLanguage === 'en' ? option.text : option.text_id}
+                        </label>
+                    `;
+                });
+
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-lg mb-4">${quiz1Data.currentQuestionIndex + 1}. ${currentLanguage === 'en' ? q.question : q.question_id}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                `;
+            } else {
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-xl mb-4">${currentLanguage === 'en' ? 'Quiz Completed!' : 'Kuis Selesai!'}</h3>
+                    <p class="text-lg">${currentLanguage === 'en' 
+                        ? `You scored ${quiz1Data.score} out of ${quiz1Data.questions.length} questions correctly.` 
+                        : `Anda mencetak ${quiz1Data.score} dari ${quiz1Data.questions.length} pertanyaan dengan benar.`}</p>
+                    <button onclick="initQuiz1()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition">${currentLanguage === 'en' ? 'Restart Quiz 1' : 'Ulangi Kuis 1'}</button>
+                `;
+                document.querySelector('#quiz1 button').style.display = 'none';
+            }
+        }
+
+        function submitQuiz1Answer() {
+            const selectedOption = document.querySelector('input[name="q1-option"]:checked');
+            const feedbackEl = document.getElementById('q1-feedback');
+
+            if (!selectedOption) {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Please select an answer!' : 'Harap pilih jawaban!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-orange-600';
+                return;
+            }
+
+            const userAnswer = selectedOption.value;
+            const currentQ = quiz1Data.questions[quiz1Data.currentQuestionIndex];
+
+            document.querySelectorAll('input[name="q1-option"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                    label.classList.add('bg-green-200', 'border-green-400', 'feedback-correct');
+                } else if (input.checked) {
+                    label.classList.add('bg-red-200', 'border-red-400', 'feedback-incorrect');
+                }
+                input.disabled = true;
+            });
+
+            if (userAnswer === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                quiz1Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct!' : 'Benar!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `Incorrect. The correct answer was: ${currentQ.correct}` 
+                    : `Salah. Jawaban yang benar adalah: ${currentQ.correct_id}`;
+                feedbackEl.className = 'mt-4 text-center font-medium text-red-600';
+            }
+
+            setTimeout(() => {
+                quiz1Data.currentQuestionIndex++;
+                loadQuiz1Question();
+            }, 1500);
+        }
+
+        function initQuiz2() {
+            quiz2Data.score = 0;
+            const itemsContainer = document.getElementById('q2-items');
+            itemsContainer.innerHTML = '';
+            document.querySelectorAll('#quiz2 .drop-zone').forEach(zone => {
+                while (zone.children.length > 1) {
+                    zone.removeChild(zone.lastChild);
+                }
+            });
+            document.getElementById('q2-feedback').textContent = '';
+
+            const shuffledItems = [...quiz2Data.items];
+            shuffleArray(shuffledItems);
+
+            shuffledItems.forEach(item => {
+                const div = document.createElement('div');
+                div.id = item.id;
+                div.textContent = currentLanguage === 'en' ? item.text : item.text_id;
+                div.className = 'draggable bg-blue-100 text-blue-800 py-2 px-4 rounded-full cursor-grab active:cursor-grabbing shadow-sm';
+                div.draggable = true;
+                itemsContainer.appendChild(div);
+            });
+
+            addDragListeners2();
+        }
+
+        function addDragListeners2() {
+            document.querySelectorAll('#quiz2 .draggable').forEach(item => {
+                item.addEventListener('dragstart', handleDragStart2);
+            });
+
+            document.querySelectorAll('#quiz2 .drop-zone').forEach(zone => {
+                zone.addEventListener('dragover', handleDragOver2);
+                zone.addEventListener('dragleave', handleDragLeave2);
+                zone.addEventListener('drop', handleDrop2);
+            });
+        }
+
+        function handleDragStart2(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function handleDragOver2(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave2(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDrop2(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (draggableElement && !dropZone.contains(draggableElement)) {
+                if (draggableElement.parentNode.id === 'q2-items') {
+                    dropZone.appendChild(draggableElement);
+                } else {
+                    const originalParent = draggableElement.parentNode;
+                    originalParent.removeChild(draggableElement);
+                    dropZone.appendChild(draggableElement);
+                }
+                draggableElement.classList.add('feedback-correct');
+                setTimeout(() => draggableElement.classList.remove('feedback-correct'), 500);
+            }
+            checkQuiz2Completion();
+        }
+
+        function checkQuiz2Completion() {
+            const itemsContainer = document.getElementById('q2-items');
+            if (itemsContainer.children.length === 0) {
+                let correctCount = 0;
+                quiz2Data.items.forEach(item => {
+                    const element = document.getElementById(item.id);
+                    const parentCategory = element.parentElement.dataset.category;
+                    if (parentCategory === item.category) {
+                        correctCount++;
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-green-100', 'text-green-800', 'feedback-correct');
+                    } else {
+                        element.classList.remove('bg-blue-100', 'text-blue-800');
+                        element.classList.add('bg-red-100', 'text-red-800', 'feedback-incorrect');
+                    }
+                });
+                quiz2Data.score = correctCount;
+                const feedbackEl = document.getElementById('q2-feedback');
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `You correctly sorted ${quiz2Data.score} out of ${quiz2Data.items.length} items!`
+                    : `Anda mengurutkan ${quiz2Data.score} dari ${quiz2Data.items.length} item dengan benar!`;
+                feedbackEl.className = quiz2Data.score === quiz2Data.items.length ? 'mt-6 text-center font-medium text-green-600' : 'mt-6 text-center font-medium text-red-600';
+                if (quiz2Data.score === quiz2Data.items.length) createConfetti();
+            }
+        }
+
+        function initQuiz3() {
+            quiz3Data.score = 0;
+            quiz3Data.selectedTerm = null;
+            quiz3Data.selectedDef = null;
+            document.getElementById('q3-feedback').textContent = '';
+
+            const grid = document.getElementById('q3-grid');
+            grid.innerHTML = `
+                <div>
+                    <h3 class="font-semibold text-center mb-2">${currentLanguage === 'en' ? 'Metabolite Class' : 'Kelas Metabolit'}</h3>
+                    <div id="q3-terms" class="space-y-2"></div>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-center mb-2">${currentLanguage === 'en' ? 'Structural Description' : 'Deskripsi Struktur'}</h3>
+                    <div id="q3-defs" class="space-y-2"></div>
+                </div>
+            `;
+
+            const shuffledTerms = [...quiz3Data.pairs];
+            shuffleArray(shuffledTerms);
+            const shuffledDefs = [...quiz3Data.pairs];
+            shuffleArray(shuffledDefs);
+
+            const termsContainer = document.getElementById('q3-terms');
+            shuffledTerms.forEach(pair => {
+                const btn = document.createElement('button');
+                btn.textContent = currentLanguage === 'en' ? pair.term : pair.term_id;
+                btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                btn.onclick = () => selectCard3('term', btn, pair.term);
+                termsContainer.appendChild(btn);
+            });
+
+            const defsContainer = document.getElementById('q3-defs');
+            shuffledDefs.forEach(pair => {
+                const btn = document.createElement('button');
+                btn.textContent = currentLanguage === 'en' ? pair.definition : pair.definition_id;
+                btn.className = 'w-full text-left p-3 border rounded-lg hover:bg-gray-100 transition';
+                btn.onclick = () => selectCard3('definition', btn, pair.definition);
+                defsContainer.appendChild(btn);
+            });
+        }
+
+        function selectCard3(type, element, value) {
+            const containerId = type === 'term' ? 'q3-terms' : 'q3-defs';
+            document.querySelectorAll(`#${containerId} button`).forEach(btn => btn.classList.remove('bg-blue-200', 'border-blue-400'));
+            element.classList.add('bg-blue-200', 'border-blue-400');
+
+            if (type === 'term') {
+                quiz3Data.selectedTerm = { element, value };
+            } else {
+                quiz3Data.selectedDef = { element, value };
+            }
+
+            if (quiz3Data.selectedTerm && quiz3Data.selectedDef) {
+                checkMatch3();
+            }
+        }
+
+        function checkMatch3() {
+            const termValue = quiz3Data.selectedTerm.value;
+            const defValue = quiz3Data.selectedDef.value;
+            const correctPair = quiz3Data.pairs.find(p => p.term === termValue);
+            const feedbackEl = document.getElementById('q3-feedback');
+
+            if (correctPair && correctPair.definition === defValue) {
+                quiz3Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct Match!' : 'Pencocokan Benar!';
+                feedbackEl.className = 'mt-6 text-center font-medium text-green-600';
+                quiz3Data.selectedTerm.element.disabled = true;
+                quiz3Data.selectedDef.element.disabled = true;
+                quiz3Data.selectedTerm.element.classList.add('bg-green-200', 'border-green-400', 'opacity-50', 'cursor-not-allowed');
+                quiz3Data.selectedDef.element.classList.add('bg-green-200', 'border-green-400', 'opacity-50', 'cursor-not-allowed');
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Incorrect. Try again!' : 'Salah. Coba lagi!';
+                feedbackEl.className = 'mt-6 text-center font-medium text-red-600';
+                quiz3Data.selectedTerm.element.classList.add('feedback-incorrect');
+                quiz3Data.selectedDef.element.classList.add('feedback-incorrect');
+                setTimeout(() => {
+                    quiz3Data.selectedTerm.element.classList.remove('feedback-incorrect');
+                    quiz3Data.selectedDef.element.classList.remove('feedback-incorrect');
+                }, 500);
+            }
+
+            quiz3Data.selectedTerm = null;
+            quiz3Data.selectedDef = null;
+            setTimeout(() => {
+                document.querySelectorAll('#q3-grid button').forEach(btn => btn.classList.remove('bg-blue-200', 'border-blue-400'));
+            }, 500);
+
+            if (quiz3Data.score === quiz3Data.pairs.length) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Congratulations! You matched all pairs correctly!'
+                    : 'Selamat! Anda mencocokkan semua pasangan dengan benar!';
+                createConfetti();
+            }
+        }
+
+        function initQuiz4() {
+            document.getElementById('q4-feedback').textContent = '';
+            const sourceContainer = document.getElementById('q4-source');
+            const targetContainer = document.getElementById('q4-target');
+            sourceContainer.innerHTML = '';
+            targetContainer.innerHTML = '';
+
+            const shuffledSteps = [...quiz4Data.steps];
+            shuffleArray(shuffledSteps);
+
+            shuffledSteps.forEach(step => {
+                const div = document.createElement('div');
+                div.id = step.id;
+                div.dataset.baseText = currentLanguage === 'en' ? step.text : step.text_id;
+                div.textContent = div.dataset.baseText;
+                div.dataset.order = step.order;
+                div.className = 'draggable bg-blue-100 text-blue-800 p-3 rounded-md cursor-grab active:cursor-grabbing shadow-sm text-center';
+                div.draggable = true;
+                sourceContainer.appendChild(div);
+            });
+
+            sourceContainer.addEventListener('dragstart', handleDragStart4);
+            targetContainer.addEventListener('dragstart', handleDragStart4);
+            targetContainer.addEventListener('dragover', handleDragOver4);
+            targetContainer.addEventListener('dragleave', handleDragLeave4);
+            targetContainer.addEventListener('drop', handleDropSequencer4);
+        }
+
+        function handleDragStart4(e) {
+            e.dataTransfer.setData('text/plain', e.target.id);
+        }
+
+        function handleDragOver4(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('drag-over');
+        }
+
+        function handleDragLeave4(e) {
+            e.currentTarget.classList.remove('drag-over');
+        }
+
+        function handleDropSequencer4(e) {
+            e.preventDefault();
+            const id = e.dataTransfer.getData('text/plain');
+            const draggableElement = document.getElementById(id);
+            const dropZone = e.currentTarget;
+            dropZone.classList.remove('drag-over');
+
+            if (draggableElement) {
+                dropZone.appendChild(draggableElement);
+                updateOrderedNumbers();
+            }
+        }
+
+        function updateOrderedNumbers() {
+            const targetContainer = document.getElementById('q4-target');
+            const items = Array.from(targetContainer.children);
+            items.forEach((item, index) => {
+                const baseText = item.dataset.baseText;
+                item.textContent = `${index + 1}. ${baseText}`;
+            });
+
+            const sourceContainer = document.getElementById('q4-source');
+            Array.from(sourceContainer.children).forEach(item => {
+                item.textContent = item.dataset.baseText;
+            });
+        }
+
+        function checkSequence4() {
+            const targetContainer = document.getElementById('q4-target');
+            const placedItems = Array.from(targetContainer.children);
+            const feedbackEl = document.getElementById('q4-feedback');
+
+            if (placedItems.length < quiz4Data.steps.length) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Please drag all steps into the pathway box.'
+                    : 'Harap seret semua langkah ke kotak jalur.';
+                feedbackEl.className = 'mt-6 text-center font-medium text-orange-600';
+                return;
+            }
+
+            let isCorrect = true;
+            placedItems.forEach((item, index) => {
+                if (parseInt(item.dataset.order) !== (index + 1)) {
+                    isCorrect = false;
+                    item.classList.remove('bg-blue-100', 'text-blue-800');
+                    item.classList.add('bg-red-100', 'text-red-800', 'feedback-incorrect');
+                } else {
+                    item.classList.remove('bg-blue-100', 'text-blue-800');
+                    item.classList.add('bg-green-100', 'text-green-800', 'feedback-correct');
+                }
+            });
+
+            if (isCorrect) {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Excellent! The pathway is in the correct order.'
+                    : 'Luar biasa! Jalur sudah dalam urutan yang benar.';
+                feedbackEl.className = 'mt-6 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? 'Not quite right. The steps in red are in the wrong position.'
+                    : 'Belum sepenuhnya benar. Langkah-langkah berwarna merah berada di posisi yang salah.';
+                feedbackEl.className = 'mt-6 text-center font-medium text-red-600';
+            }
+        }
+
+        function initQuiz5() {
+            quiz5Data.currentQuestionIndex = 0;
+            quiz5Data.score = 0;
+            document.getElementById('q5-feedback').textContent = '';
+            loadQuiz5Question();
+        }
+
+        function loadQuiz5Question() {
+            const questionArea = document.getElementById('q5-question-area');
+            const feedbackEl = document.getElementById('q5-feedback');
+            feedbackEl.textContent = '';
+
+            if (quiz5Data.currentQuestionIndex < quiz5Data.questions.length) {
+                const q = quiz5Data.questions[quiz5Data.currentQuestionIndex];
+                let optionsHTML = '';
+                shuffleArray(q.options);
+                q.options.forEach(option => {
+                    optionsHTML += `
+                        <label class="option-label block text-left p-3 mb-2 bg-white rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100 transition">
+                            <input type="radio" name="q5-option" value="${currentLanguage === 'en' ? option.text : option.text_id}" class="mr-2">
+                            ${currentLanguage === 'en' ? option.text : option.text_id}
+                        </label>
+                    `;
+                });
+
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-lg mb-4">${quiz5Data.currentQuestionIndex + 1}. ${currentLanguage === 'en' ? q.question : q.question_id}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                `;
+            } else {
+                questionArea.innerHTML = `
+                    <h3 class="font-semibold text-xl mb-4">${currentLanguage === 'en' ? 'Quiz Completed!' : 'Kuis Selesai!'}</h3>
+                    <p class="text-lg">${currentLanguage === 'en' 
+                        ? `You scored ${quiz5Data.score} out of ${quiz5Data.questions.length} questions correctly.` 
+                        : `Anda mencetak ${quiz5Data.score} dari ${quiz5Data.questions.length} pertanyaan dengan benar.`}</p>
+                    <button onclick="initQuiz5()" class="mt-4 bg-blue-500 text-white font-semibold py-2 px-6 rounded-lg hover:bg-blue-600 transition">${currentLanguage === 'en' ? 'Restart Quiz 5' : 'Ulangi Kuis 5'}</button>
+                `;
+                document.querySelector('#quiz5 button').style.display = 'none';
+            }
+        }
+
+        function submitQuiz5Answer() {
+            const selectedOption = document.querySelector('input[name="q5-option"]:checked');
+            const feedbackEl = document.getElementById('q5-feedback');
+
+            if (!selectedOption) {
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Please select an answer!' : 'Harap pilih jawaban!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-orange-600';
+                return;
+            }
+
+            const userAnswer = selectedOption.value;
+            const currentQ = quiz5Data.questions[quiz5Data.currentQuestionIndex];
+
+            document.querySelectorAll('input[name="q5-option"]').forEach(input => {
+                const label = input.closest('label');
+                if (input.value === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                    label.classList.add('bg-green-200', 'border-green-400', 'feedback-correct');
+                } else if (input.checked) {
+                    label.classList.add('bg-red-200', 'border-red-400', 'feedback-incorrect');
+                }
+                input.disabled = true;
+            });
+
+            if (userAnswer === (currentLanguage === 'en' ? currentQ.correct : currentQ.correct_id)) {
+                quiz5Data.score++;
+                feedbackEl.textContent = currentLanguage === 'en' ? 'Correct!' : 'Benar!';
+                feedbackEl.className = 'mt-4 text-center font-medium text-green-600';
+                createConfetti();
+            } else {
+                feedbackEl.textContent = currentLanguage === 'en' 
+                    ? `Incorrect. The correct answer was: ${currentQ.correct}` 
+                    : `Salah. Jawaban yang benar adalah: ${currentQ.correct_id}`;
+                feedbackEl.className = 'mt-4 text-center font-medium text-red-600';
+            }
+
+            setTimeout(() => {
+                quiz5Data.currentQuestionIndex++;
+                loadQuiz5Question();
+            }, 1500);
+        }
+
+        function googleTranslateElementInit() {
+            new google.translate.TranslateElement({
+                pageLanguage: 'en',
+                includedLanguages: 'en,id',
+                layout: google.translate.TranslateElement.InlineLayout.SIMPLE
+            }, 'google_translate_element');
+        }
+
+        window.onload = function() {
+            initQuiz1();
+            initQuiz2();
+            initQuiz3();
+            initQuiz4();
+            initQuiz5();
+            showQuiz(1);
+        };
+    </script>
+    <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+</body>
+</html>
